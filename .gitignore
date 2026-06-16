@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+
+# Expo
+.expo
+
+# Build outputs
+dist
+build
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Exported real data
+*.csv
+*.tsv
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Test coverage
+coverage
+
+# Documentation should stay trackable and should not be ignored.
+# docs
+
+# Future sample CSV/TSV files may be committed under data/sample if they contain only fake data.
+# To allow them later, add exceptions such as:
+# !data/
+# !data/sample/
+# !data/sample/**/*.csv
+# !data/sample/**/*.tsv
