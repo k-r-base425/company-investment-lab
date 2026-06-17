@@ -41,16 +41,40 @@ MVPで作る主な機能:
 9. CSV/JSON出力
 10. 設定ページ
 
-## セットアップ予定
+## セットアップ
 
-このリポジトリでは、まず設計ドキュメントとGit管理ルールを整備します。
+このリポジトリはExpo Webアプリとしてビルドできます。
 
-Expoプロジェクトの初期化、パッケージ追加、画面実装、SQLite設計、CSV/JSON出力の実装は次の工程で行います。
+```sh
+npm install
+npm run build
+```
+
+SQLite設計、CSV/JSON出力、追加画面の実装は今後の工程で行います。
+
+## GitHub Pagesでの確認
+
+このプロジェクトはExpo Webとして静的ビルドし、GitHub Pagesで確認できます。
+
+公開URL：
+
+https://k-r-base425.github.io/company-investment-lab/
+
+公開方式：
+
+- GitHub Actionsで `npm run build` を実行
+- `dist` フォルダをGitHub Pagesへデプロイ
+- GitHub PagesのSourceは GitHub Actions に設定する
+
+注意：
+
+- 実データをコミットしない
+- `.env` をコミットしない
+- CSV、SQLite DB、個人情報入り画像をコミットしない
+- GitHub Pagesは公開URLになるため、表示内容に個人情報を含めない
 
 ## 注意事項
 
-- まだExpoプロジェクトは初期化していません
-- `package.json` はまだ作成していません
 - `.env` と `.env.*` はGit管理しません
 - 実データ入りCSV、SQLiteファイル、ログ、APIキーはGitHubにコミットしません
 - `.env.example` には空のキー名だけを置きます

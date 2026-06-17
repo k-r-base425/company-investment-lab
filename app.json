@@ -11,6 +11,9 @@
       "bundler": "metro",
       "output": "static"
     },
+    "experiments": {
+      "baseUrl": "/company-investment-lab"
+    },
     "plugins": [
       "expo-router"
     ]
