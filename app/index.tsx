@@ -1,106 +1,62 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
+import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
 import { sampleAiAnalysisPayload, sampleMonthlyChartDays } from "../lib/ai/sampleAiAnalysisPayload";
+import { sampleHomeKpis } from "../lib/home/sampleHomeSummary";
 import type { AiAnalysisDay } from "../lib/types/ai";
-
-const metricCards = [
-  {
-    label: "売上",
-    value: sampleAiAnalysisPayload.business.revenue,
-    accent: "#2563EB",
-    subValue: "+12.4%"
-  },
-  {
-    label: "経費",
-    value: sampleAiAnalysisPayload.business.expenses,
-    accent: "#EA580C",
-    subValue: "経費率 53.9%"
-  },
-  {
-    label: "利益",
-    value: sampleAiAnalysisPayload.business.profit,
-    accent: "#059669",
-    subValue: "利益率 46.1%"
-  },
-  {
-    label: "税金目安",
-    value: sampleAiAnalysisPayload.business.estimatedTax,
-    accent: "#7C3AED",
-    subValue: "概算"
-  },
-  {
-    label: "投資可能額",
-    value: sampleAiAnalysisPayload.business.investableAmount,
-    accent: "#0891B2",
-    subValue: "今月"
-  },
-  {
-    label: "総資産",
-    value: sampleAiAnalysisPayload.investment.totalAssets,
-    accent: "#4338CA",
-    subValue: "現金比率 28.6%"
-  }
-];
 
 const learningProgress = Math.round(sampleAiAnalysisPayload.learning.progressRate * 100);
 
 export default function HomeScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.kicker}>Account Invest Lab</Text>
-          <Text style={styles.heading}>ダッシュボード</Text>
-        </View>
-        <Text style={styles.monthLabel}>2026年6月</Text>
-      </View>
-
-      <View style={styles.summaryGrid}>
-        {metricCards.map((metric) => (
-          <View key={metric.label} style={styles.metricCard}>
-            <View style={[styles.metricAccent, { backgroundColor: metric.accent }]} />
-            <Text style={styles.metricLabel}>{metric.label}</Text>
-            <Text style={styles.metricValue}>{formatYen(metric.value)}</Text>
-            <Text style={[styles.metricSubValue, { color: metric.accent }]}>{metric.subValue}</Text>
+      <View style={styles.contentInner}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.kicker}>Account Invest Lab</Text>
+            <Text style={styles.heading}>ダッシュボード</Text>
           </View>
-        ))}
-      </View>
+          <Text style={styles.monthLabel}>2026年6月</Text>
+        </View>
 
-      <MonthlyChart days={sampleMonthlyChartDays} />
+        <HomeKpiGrid kpis={sampleHomeKpis} />
 
-      <View style={styles.twoColumnSection}>
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>資産配分</Text>
-          {sampleAiAnalysisPayload.investment.assets.map((asset) => (
-            <View key={asset.assetType} style={styles.allocationRow}>
-              <Text style={styles.allocationName}>{asset.name}</Text>
-              <View style={styles.allocationTrack}>
-                <View style={[styles.allocationFill, { width: `${asset.ratio * 100}%` }]} />
+        <MonthlyChart days={sampleMonthlyChartDays} />
+
+        <View style={styles.twoColumnSection}>
+          <View style={styles.panel}>
+            <Text style={styles.panelTitle}>資産配分</Text>
+            {sampleAiAnalysisPayload.investment.assets.map((asset) => (
+              <View key={asset.assetType} style={styles.allocationRow}>
+                <Text style={styles.allocationName}>{asset.name}</Text>
+                <View style={styles.allocationTrack}>
+                  <View style={[styles.allocationFill, { width: `${asset.ratio * 100}%` }]} />
+                </View>
+                <Text style={styles.allocationRatio}>{Math.round(asset.ratio * 100)}%</Text>
               </View>
-              <Text style={styles.allocationRatio}>{Math.round(asset.ratio * 100)}%</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>今日の学習</Text>
-          <Text style={styles.learningTitle}>PER / PBR / ROE</Text>
-          <Text style={styles.learningBody}>投資指標を利益率と資本効率に結びつけて確認します。</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${learningProgress}%` }]} />
+            ))}
           </View>
-          <Text style={styles.progressText}>学習進捗 {learningProgress}%</Text>
+
+          <View style={styles.panel}>
+            <Text style={styles.panelTitle}>今日の学習</Text>
+            <Text style={styles.learningTitle}>PER / PBR / ROE</Text>
+            <Text style={styles.learningBody}>投資指標を利益率と資本効率に結びつけて確認します。</Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${learningProgress}%` }]} />
+            </View>
+            <Text style={styles.progressText}>学習進捗 {learningProgress}%</Text>
+          </View>
         </View>
-      </View>
 
-      <AiAnalysisCard />
+        <AiAnalysisCard />
 
-      <View style={styles.shortcutGrid}>
-        <Shortcut label="会計入力" />
-        <Shortcut label="家計簿" />
-        <Shortcut label="投資分析" />
-        <Shortcut label="CSV出力" />
+        <View style={styles.shortcutGrid}>
+          <Shortcut label="会計入力" />
+          <Shortcut label="家計簿" />
+          <Shortcut label="投資分析" />
+          <Shortcut label="CSV出力" />
+        </View>
       </View>
     </ScrollView>
   );
@@ -192,10 +148,6 @@ function getBarColor(status: AiAnalysisDay["status"]) {
   }
 }
 
-function formatYen(value: number) {
-  return `¥${value.toLocaleString("ja-JP")}`;
-}
-
 const styles = StyleSheet.create({
   screen: {
     backgroundColor: "#F6F8FC",
@@ -205,6 +157,11 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     paddingHorizontal: 16,
     paddingTop: 56
+  },
+  contentInner: {
+    alignSelf: "center",
+    maxWidth: 430,
+    width: "100%"
   },
   header: {
     alignItems: "flex-start",
@@ -237,45 +194,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     paddingHorizontal: 10,
     paddingVertical: 8
-  },
-  summaryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10
-  },
-  metricCard: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    borderWidth: 1,
-    minHeight: 112,
-    padding: 12,
-    position: "relative",
-    width: "48.5%"
-  },
-  metricAccent: {
-    borderRadius: 999,
-    height: 5,
-    marginBottom: 11,
-    width: 32
-  },
-  metricLabel: {
-    color: "#64748B",
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0,
-    marginBottom: 6
-  },
-  metricValue: {
-    color: "#0F172A",
-    fontSize: 19,
-    fontWeight: "900",
-    letterSpacing: 0
-  },
-  metricSubValue: {
-    fontSize: 12,
-    fontWeight: "800",
-    marginTop: 7
   },
   chartCard: {
     backgroundColor: "#FFFFFF",
