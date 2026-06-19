@@ -1,17 +1,70 @@
+import { useCallback, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
 
 import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
 import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
+import { HomeDataStatus } from "../components/home/HomeDataStatus";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
 import { sampleMonthlyChartDays } from "../lib/ai/sampleAiAnalysisPayload";
+import { buildHomeKpisFromAccounting } from "../lib/home/buildHomeKpisFromAccounting";
 import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
-import { sampleHomeKpis } from "../lib/home/sampleHomeSummary";
 import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
+import { getAccountingEntriesByMonth, initAccountingStorage } from "../lib/storage/accountingEntryRepository";
+import type { AccountingEntry } from "../lib/types/accounting";
 import type { AiAnalysisDay } from "../lib/types/ai";
 
+const targetMonth = "2026-06";
+const monthLabel = "2026年6月";
+const accountingLoadErrorMessage = "会計データの読み込みに失敗しました。サンプルデータを表示しています。";
+
 export default function HomeScreen() {
+  const [accountingEntries, setAccountingEntries] = useState<AccountingEntry[]>(sampleAccountingEntries);
+  const [savedEntryCount, setSavedEntryCount] = useState(0);
+  const [isFallback, setIsFallback] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const kpis = useMemo(
+    () => buildHomeKpisFromAccounting({ entries: accountingEntries, month: targetMonth }),
+    [accountingEntries]
+  );
+
+  const loadAccountingEntries = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+      await initAccountingStorage();
+      const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+
+      if (savedEntries.length > 0) {
+        setAccountingEntries(savedEntries);
+        setSavedEntryCount(savedEntries.length);
+        setIsFallback(false);
+        return;
+      }
+
+      setAccountingEntries(sampleAccountingEntries);
+      setSavedEntryCount(0);
+      setIsFallback(true);
+    } catch {
+      setAccountingEntries(sampleAccountingEntries);
+      setSavedEntryCount(0);
+      setIsFallback(true);
+      setErrorMessage(accountingLoadErrorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAccountingEntries();
+    }, [loadAccountingEntries])
+  );
+
   return (
     <View style={styles.root}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -21,10 +74,19 @@ export default function HomeScreen() {
               <Text style={styles.kicker}>Account Invest Lab</Text>
               <Text style={styles.heading}>ダッシュボード</Text>
             </View>
-            <Text style={styles.monthLabel}>2026年6月</Text>
+            <Text style={styles.monthLabel}>{monthLabel}</Text>
           </View>
 
-          <HomeKpiGrid kpis={sampleHomeKpis} />
+          <HomeDataStatus
+            entryCount={savedEntryCount}
+            errorMessage={errorMessage}
+            isFallback={isFallback}
+            isLoading={isLoading}
+            monthLabel={monthLabel}
+            onRefresh={loadAccountingEntries}
+          />
+
+          <HomeKpiGrid kpis={kpis} />
 
           <MonthlyChart days={sampleMonthlyChartDays} />
 
