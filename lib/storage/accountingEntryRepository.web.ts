@@ -27,6 +27,28 @@ export async function insertAccountingEntry(entry: AccountingEntry): Promise<voi
   writeEntries([nextEntry, ...entries.filter((currentEntry) => currentEntry.id !== entry.id)]);
 }
 
+export async function updateAccountingEntry(entry: AccountingEntry): Promise<void> {
+  const entries = readEntries();
+  const targetEntry = entries.find((currentEntry) => currentEntry.id === entry.id);
+
+  if (!targetEntry) {
+    throw new Error("Accounting entry was not found.");
+  }
+
+  const now = new Date().toISOString();
+  const nextEntries = entries.map((currentEntry) =>
+    currentEntry.id === entry.id
+      ? {
+          ...entry,
+          createdAt: targetEntry.createdAt ?? entry.createdAt ?? now,
+          updatedAt: now
+        }
+      : currentEntry
+  );
+
+  writeEntries(nextEntries);
+}
+
 export async function deleteAccountingEntry(id: string): Promise<void> {
   const entries = readEntries();
   writeEntries(entries.filter((entry) => entry.id !== id));

@@ -1,15 +1,21 @@
 import { calculateMonthlyAccountingSummary } from "./calculateAccountingSummary";
-import type { AccountingEntry, AccountingEntryType, CostBehavior, SpendingJudgement } from "../types/accounting";
+import type {
+  AccountingEntry,
+  AccountingEntryType,
+  CostBehavior,
+  MonthlyAccountingSummary,
+  SpendingJudgement
+} from "../types/accounting";
 
-type CategoryBreakdownItem = {
+export type CategoryBreakdownItem = {
   category: string;
   amount: number;
   count: number;
 };
 
-type AccountingAnalysisPayload = {
+export type AccountingAnalysisPayload = {
   month: string;
-  summary: Omit<ReturnType<typeof calculateMonthlyAccountingSummary>, "month" | "entryCount">;
+  summary: MonthlyAccountingSummary;
   categoryBreakdown: {
     revenue: CategoryBreakdownItem[];
     expense: CategoryBreakdownItem[];
@@ -22,7 +28,7 @@ type AccountingAnalysisPayload = {
 
 export function buildAccountingAnalysisPayload(entries: AccountingEntry[], month: string): AccountingAnalysisPayload {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
-  const { month: _month, entryCount: _entryCount, ...summary } = calculateMonthlyAccountingSummary(entries, month);
+  const summary = calculateMonthlyAccountingSummary(entries, month);
 
   return {
     month,

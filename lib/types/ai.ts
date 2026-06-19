@@ -1,3 +1,5 @@
+import type { AccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+
 export type AiAnalysisPayload = {
   period: string;
   goal: string;
@@ -19,6 +21,7 @@ export type AiAnalysisPayload = {
       amount: number;
     }[];
   };
+  accountingAnalysis: AccountingAnalysisPayload;
   investment: {
     totalAssets: number;
     cashRatio: number;

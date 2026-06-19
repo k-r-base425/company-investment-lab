@@ -85,6 +85,50 @@ export async function insertAccountingEntry(entry: AccountingEntry): Promise<voi
   );
 }
 
+export async function updateAccountingEntry(entry: AccountingEntry): Promise<void> {
+  const database = await getAccountingDatabase();
+  const updatedAt = new Date().toISOString();
+
+  const result = await database.runAsync(
+    `UPDATE accounting_entries
+    SET
+      type = ?,
+      date = ?,
+      amount = ?,
+      category = ?,
+      payment_method = ?,
+      memo = ?,
+      partner_name = ?,
+      cost_behavior = ?,
+      spending_judgement = ?,
+      debit_account = ?,
+      debit_amount = ?,
+      credit_account = ?,
+      credit_amount = ?,
+      updated_at = ?
+    WHERE id = ?`,
+    entry.type,
+    entry.date,
+    entry.amount,
+    entry.category ?? null,
+    entry.paymentMethod ?? null,
+    entry.memo,
+    entry.partnerName ?? null,
+    entry.costBehavior ?? null,
+    entry.spendingJudgement ?? null,
+    entry.debitAccount ?? null,
+    entry.debitAmount ?? null,
+    entry.creditAccount ?? null,
+    entry.creditAmount ?? null,
+    updatedAt,
+    entry.id
+  );
+
+  if (result.changes === 0) {
+    throw new Error("Accounting entry was not found.");
+  }
+}
+
 export async function deleteAccountingEntry(id: string): Promise<void> {
   const database = await getAccountingDatabase();
   await database.runAsync(`DELETE FROM accounting_entries WHERE id = ?`, id);

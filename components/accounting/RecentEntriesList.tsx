@@ -6,9 +6,10 @@ import type { AccountingEntry } from "../../lib/types/accounting";
 type RecentEntriesListProps = {
   entries: AccountingEntry[];
   onDelete: (id: string) => void;
+  onEdit: (entry: AccountingEntry) => void;
 };
 
-export function RecentEntriesList({ entries, onDelete }: RecentEntriesListProps) {
+export function RecentEntriesList({ entries, onDelete, onEdit }: RecentEntriesListProps) {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -18,7 +19,7 @@ export function RecentEntriesList({ entries, onDelete }: RecentEntriesListProps)
 
       <View style={styles.list}>
         {entries.map((entry) => (
-          <EntryRow entry={entry} key={entry.id} onDelete={onDelete} />
+          <EntryRow entry={entry} key={entry.id} onDelete={onDelete} onEdit={onEdit} />
         ))}
       </View>
     </View>
@@ -28,9 +29,10 @@ export function RecentEntriesList({ entries, onDelete }: RecentEntriesListProps)
 type EntryRowProps = {
   entry: AccountingEntry;
   onDelete: (id: string) => void;
+  onEdit: (entry: AccountingEntry) => void;
 };
 
-function EntryRow({ entry, onDelete }: EntryRowProps) {
+function EntryRow({ entry, onDelete, onEdit }: EntryRowProps) {
   const tone = accountingTypeTones[entry.type];
 
   return (
@@ -42,13 +44,22 @@ function EntryRow({ entry, onDelete }: EntryRowProps) {
             <Text style={styles.typeBadgeText}>{accountingTypeLabels[entry.type]}</Text>
           </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onDelete(entry.id)}
-          style={({ pressed }) => [styles.deleteButton, pressed && styles.deleteButtonPressed]}
-        >
-          <Text style={styles.deleteButtonText}>削除</Text>
-        </Pressable>
+        <View style={styles.actionRow}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onEdit(entry)}
+            style={({ pressed }) => [styles.editButton, pressed && styles.actionButtonPressed]}
+          >
+            <Text style={styles.editButtonText}>編集</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onDelete(entry.id)}
+            style={({ pressed }) => [styles.deleteButton, pressed && styles.actionButtonPressed]}
+          >
+            <Text style={styles.deleteButtonText}>削除</Text>
+          </Pressable>
+        </View>
       </View>
 
       <Text style={styles.memo}>{entry.memo}</Text>
@@ -128,6 +139,13 @@ const styles = StyleSheet.create({
     gap: 8,
     minWidth: 0
   },
+  actionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    justifyContent: "flex-end",
+    maxWidth: 124
+  },
   date: {
     color: "#64748B",
     fontSize: 12,
@@ -143,6 +161,19 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "900"
   },
+  editButton: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE",
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6
+  },
+  editButtonText: {
+    color: "#1D4ED8",
+    fontSize: 11,
+    fontWeight: "900"
+  },
   deleteButton: {
     backgroundColor: "#FEF2F2",
     borderColor: "#FECACA",
@@ -151,7 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6
   },
-  deleteButtonPressed: {
+  actionButtonPressed: {
     opacity: 0.78
   },
   deleteButtonText: {

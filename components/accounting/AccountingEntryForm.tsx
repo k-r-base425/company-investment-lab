@@ -21,10 +21,19 @@ import type {
 
 type AccountingEntryFormProps = {
   type: Exclude<AccountingEntryType, "journal">;
-  onAdd: (entry: AccountingEntry) => void;
+  editingEntry?: AccountingEntry | null;
+  onCancelEdit?: () => void;
+  onSubmit: (entry: AccountingEntry) => Promise<boolean> | boolean | void;
+  submitLabel?: string;
 };
 
-export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
+export function AccountingEntryForm({
+  type,
+  editingEntry = null,
+  onCancelEdit,
+  onSubmit,
+  submitLabel = "入力を追加"
+}: AccountingEntryFormProps) {
   const [date, setDate] = useState("2026-06-05");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(getCategories(type)[0] ?? "");
@@ -36,6 +45,20 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (editingEntry && editingEntry.type !== "journal") {
+      const nextCategory = editingEntry.category ?? getCategories(type)[0] ?? "";
+      setDate(editingEntry.date);
+      setAmount(String(editingEntry.amount));
+      setCategory(nextCategory);
+      setPaymentMethod(editingEntry.paymentMethod ?? getPaymentMethods(type)[0] ?? "その他");
+      setMemo(editingEntry.memo);
+      setPartnerName(editingEntry.partnerName ?? "");
+      setCostBehavior(editingEntry.costBehavior ?? getDefaultCostBehavior(nextCategory));
+      setSpendingJudgement(editingEntry.spendingJudgement ?? getDefaultSpendingJudgement(nextCategory));
+      setError("");
+      return;
+    }
+
     const initialCategory = getCategories(type)[0] ?? "";
     setDate("2026-06-05");
     setAmount("");
@@ -46,7 +69,7 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
     setCostBehavior(getDefaultCostBehavior(initialCategory));
     setSpendingJudgement(getDefaultSpendingJudgement(initialCategory));
     setError("");
-  }, [type]);
+  }, [type, editingEntry]);
 
   const tone = accountingTypeTones[type];
   const categories = getCategories(type);
@@ -75,7 +98,7 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const errors = validateAccountingEntryInput({
       type,
       date,
@@ -92,8 +115,8 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
 
     const numericAmount = parseAmount(amount);
 
-    onAdd({
-      id: `${type}-${Date.now()}`,
+    const didSubmit = await onSubmit({
+      id: editingEntry?.id ?? `${type}-${Date.now()}`,
       type,
       date: date.trim(),
       amount: numericAmount,
@@ -102,10 +125,14 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
       memo: memo.trim(),
       partnerName: type === "revenue" ? partnerName.trim() : undefined,
       costBehavior: needsCostFields ? costBehavior : undefined,
-      spendingJudgement: needsCostFields ? spendingJudgement : undefined
+      spendingJudgement: needsCostFields ? spendingJudgement : undefined,
+      createdAt: editingEntry?.createdAt,
+      updatedAt: editingEntry?.updatedAt
     });
 
-    resetForm();
+    if (didSubmit !== false) {
+      resetForm();
+    }
   };
 
   return (
@@ -205,8 +232,18 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
         onPress={handleSubmit}
         style={({ pressed }) => [styles.button, { backgroundColor: tone }, pressed && styles.buttonPressed]}
       >
-        <Text style={styles.buttonText}>入力を追加</Text>
+        <Text style={styles.buttonText}>{submitLabel}</Text>
       </Pressable>
+
+      {editingEntry ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onCancelEdit}
+          style={({ pressed }) => [styles.cancelButton, pressed && styles.buttonPressed]}
+        >
+          <Text style={styles.cancelButtonText}>編集をキャンセル</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -371,6 +408,23 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#FFFFFF",
     fontSize: 15,
+    fontWeight: "900"
+  },
+  cancelButton: {
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: "center",
+    marginTop: 10,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 11
+  },
+  cancelButtonText: {
+    color: "#334155",
+    fontSize: 14,
     fontWeight: "900"
   }
 });

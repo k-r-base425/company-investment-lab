@@ -14,7 +14,8 @@ import {
   getAccountingEntriesByMonth,
   initAccountingStorage,
   insertAccountingEntry,
-  seedAccountingEntriesIfEmpty
+  seedAccountingEntriesIfEmpty,
+  updateAccountingEntry
 } from "../lib/storage/accountingEntryRepository";
 import type { AccountingEntry, AccountingEntryType } from "../lib/types/accounting";
 
@@ -26,6 +27,7 @@ export default function AccountingScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [storageError, setStorageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [editingEntry, setEditingEntry] = useState<AccountingEntry | null>(null);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const monthlySummary = calculateMonthlyAccountingSummary(entries, targetMonth);
 
@@ -83,14 +85,25 @@ export default function AccountingScreen() {
     }, 2500);
   };
 
-  const handleAddEntry = async (entry: AccountingEntry) => {
+  const handleSubmitEntry = async (entry: AccountingEntry) => {
     try {
       setStorageError("");
+
+      if (editingEntry) {
+        await updateAccountingEntry(entry);
+        setEditingEntry(null);
+        await reloadEntries();
+        showMessage("更新しました");
+        return true;
+      }
+
       await insertAccountingEntry(entry);
       await reloadEntries();
       showMessage("入力を追加しました");
+      return true;
     } catch {
-      setStorageError("入力の保存に失敗しました。");
+      setStorageError(editingEntry ? "入力の更新に失敗しました。" : "入力の保存に失敗しました。");
+      return false;
     }
   };
 
@@ -98,11 +111,30 @@ export default function AccountingScreen() {
     try {
       setStorageError("");
       await deleteAccountingEntry(id);
+      if (editingEntry?.id === id) {
+        setEditingEntry(null);
+      }
       await reloadEntries();
       showMessage("削除しました");
     } catch {
       setStorageError("入力の削除に失敗しました。");
     }
+  };
+
+  const handleEditEntry = (entry: AccountingEntry) => {
+    setStorageError("");
+    setSuccessMessage("");
+    setActiveType(entry.type);
+    setEditingEntry(entry);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingEntry(null);
+  };
+
+  const handleTypeChange = (type: AccountingEntryType) => {
+    setActiveType(type);
+    setEditingEntry(null);
   };
 
   return (
@@ -124,17 +156,28 @@ export default function AccountingScreen() {
 
           {storageError ? <Text style={styles.errorMessage}>{storageError}</Text> : null}
 
-          <AccountingTypeTabs activeType={activeType} onChange={setActiveType} />
+          <AccountingTypeTabs activeType={activeType} onChange={handleTypeChange} />
 
           {activeType === "journal" ? (
-            <JournalEntryForm onAdd={handleAddEntry} />
+            <JournalEntryForm
+              editingEntry={editingEntry?.type === "journal" ? editingEntry : null}
+              onCancelEdit={handleCancelEdit}
+              onSubmit={handleSubmitEntry}
+              submitLabel={editingEntry?.type === "journal" ? "入力を更新" : "入力を追加"}
+            />
           ) : (
-            <AccountingEntryForm onAdd={handleAddEntry} type={activeType} />
+            <AccountingEntryForm
+              editingEntry={editingEntry?.type === activeType ? editingEntry : null}
+              onCancelEdit={handleCancelEdit}
+              onSubmit={handleSubmitEntry}
+              submitLabel={editingEntry?.type === activeType ? "入力を更新" : "入力を追加"}
+              type={activeType}
+            />
           )}
 
           {successMessage ? <Text style={styles.successMessage}>{successMessage}</Text> : null}
 
-          <RecentEntriesList entries={entries} onDelete={handleDeleteEntry} />
+          <RecentEntriesList entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />
         </View>
       </ScrollView>
       <BottomTabBar activeTab="accounting" />

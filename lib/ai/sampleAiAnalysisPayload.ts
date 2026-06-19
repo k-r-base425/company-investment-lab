@@ -1,4 +1,6 @@
 import type { AiAnalysisDay, AiAnalysisPayload } from "../types/ai";
+import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { sampleAccountingEntries } from "../accounting/sampleAccountingEntries";
 
 const dailyValues: Array<number | null> = [
   120000,
@@ -83,6 +85,7 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
       { name: "交際費", amount: 30000 }
     ]
   },
+  accountingAnalysis: buildAccountingAnalysisPayload(sampleAccountingEntries, "2026-06"),
   investment: {
     totalAssets: 14850000,
     cashRatio: 0.286,

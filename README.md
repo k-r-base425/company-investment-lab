@@ -58,6 +58,9 @@ SQLite設計、CSV/JSON出力、追加画面の実装は今後の工程で行い
 
 - ネイティブ実行ではSQLiteを使います
 - Web / GitHub Pages確認では`localStorage` fallbackを使います
+- 会計入力データは追加、編集、削除できます
+- ホーム画面のAI分析コピーには保存済み会計データが反映されます
+- GitHub Pages確認では`localStorage`上のサンプルデータを使います
 - ブラウザの`localStorage`を消すと、Web確認用の保存データは消えます
 - MVP確認では実データを入れず、サンプルデータだけを使ってください
 

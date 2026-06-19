@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { accountingTypeTones, journalAccountOptions } from "../../lib/accounting/accountingOptions";
@@ -6,10 +6,18 @@ import { parseAmount, validateJournalEntryInput } from "../../lib/accounting/val
 import type { AccountingEntry } from "../../lib/types/accounting";
 
 type JournalEntryFormProps = {
-  onAdd: (entry: AccountingEntry) => void;
+  editingEntry?: AccountingEntry | null;
+  onCancelEdit?: () => void;
+  onSubmit: (entry: AccountingEntry) => Promise<boolean> | boolean | void;
+  submitLabel?: string;
 };
 
-export function JournalEntryForm({ onAdd }: JournalEntryFormProps) {
+export function JournalEntryForm({
+  editingEntry = null,
+  onCancelEdit,
+  onSubmit,
+  submitLabel = "入力を追加"
+}: JournalEntryFormProps) {
   const [date, setDate] = useState("2026-06-05");
   const [debitAccount, setDebitAccount] = useState("消耗品費");
   const [debitAmount, setDebitAmount] = useState("");
@@ -24,7 +32,32 @@ export function JournalEntryForm({ onAdd }: JournalEntryFormProps) {
   const amountsAreValid = Number.isFinite(numericDebit) && Number.isFinite(numericCredit) && numericDebit > 0 && numericCredit > 0;
   const balanced = amountsAreValid && numericDebit === numericCredit;
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    if (editingEntry?.type === "journal") {
+      setDate(editingEntry.date);
+      setDebitAccount(editingEntry.debitAccount ?? "消耗品費");
+      setDebitAmount(String(editingEntry.debitAmount ?? editingEntry.amount));
+      setCreditAccount(editingEntry.creditAccount ?? "現金");
+      setCreditAmount(String(editingEntry.creditAmount ?? editingEntry.amount));
+      setMemo(editingEntry.memo);
+      setError("");
+      return;
+    }
+
+    resetForm();
+  }, [editingEntry]);
+
+  const resetForm = () => {
+    setDate("2026-06-05");
+    setDebitAccount("消耗品費");
+    setDebitAmount("");
+    setCreditAccount("現金");
+    setCreditAmount("");
+    setMemo("");
+    setError("");
+  };
+
+  const handleSubmit = async () => {
     const errors = validateJournalEntryInput({
       date,
       debitAccount,
@@ -39,8 +72,8 @@ export function JournalEntryForm({ onAdd }: JournalEntryFormProps) {
       return;
     }
 
-    onAdd({
-      id: `journal-${Date.now()}`,
+    const didSubmit = await onSubmit({
+      id: editingEntry?.id ?? `journal-${Date.now()}`,
       type: "journal",
       date: date.trim(),
       amount: numericDebit,
@@ -48,16 +81,14 @@ export function JournalEntryForm({ onAdd }: JournalEntryFormProps) {
       debitAccount,
       debitAmount: numericDebit,
       creditAccount,
-      creditAmount: numericCredit
+      creditAmount: numericCredit,
+      createdAt: editingEntry?.createdAt,
+      updatedAt: editingEntry?.updatedAt
     });
 
-    setDate("2026-06-05");
-    setDebitAccount("消耗品費");
-    setDebitAmount("");
-    setCreditAccount("現金");
-    setCreditAmount("");
-    setMemo("");
-    setError("");
+    if (didSubmit !== false) {
+      resetForm();
+    }
   };
 
   return (
@@ -131,8 +162,18 @@ export function JournalEntryForm({ onAdd }: JournalEntryFormProps) {
         onPress={handleSubmit}
         style={({ pressed }) => [styles.button, { backgroundColor: tone }, pressed && styles.buttonPressed]}
       >
-        <Text style={styles.buttonText}>入力を追加</Text>
+        <Text style={styles.buttonText}>{submitLabel}</Text>
       </Pressable>
+
+      {editingEntry ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onCancelEdit}
+          style={({ pressed }) => [styles.cancelButton, pressed && styles.buttonPressed]}
+        >
+          <Text style={styles.cancelButtonText}>編集をキャンセル</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -322,6 +363,23 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#FFFFFF",
     fontSize: 15,
+    fontWeight: "900"
+  },
+  cancelButton: {
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: "center",
+    marginTop: 10,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 11
+  },
+  cancelButtonText: {
+    color: "#334155",
+    fontSize: 14,
     fontWeight: "900"
   }
 });

@@ -3,12 +3,17 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 
 import { buildAiAnalysisPrompt } from "../../lib/ai/buildAiAnalysisPrompt";
-import { sampleAiAnalysisPayload } from "../../lib/ai/sampleAiAnalysisPayload";
+import { buildHomeAiAnalysisPayload } from "../../lib/ai/buildHomeAiAnalysisPayload";
+import { sampleAccountingEntries } from "../../lib/accounting/sampleAccountingEntries";
+import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
 
 type CopyStatus = "idle" | "success" | "error";
 
+const targetMonth = "2026-06";
+
 export function AiAnalysisCard() {
   const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
+  const [accountingEntryCount, setAccountingEntryCount] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -32,8 +37,12 @@ export function AiAnalysisCard() {
 
   const handleCopy = async () => {
     try {
-      const prompt = buildAiAnalysisPrompt(sampleAiAnalysisPayload);
+      await initAccountingStorage();
+      const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+      const entries = savedEntries.length > 0 ? savedEntries : sampleAccountingEntries;
+      const prompt = buildAiAnalysisPrompt(buildHomeAiAnalysisPayload(entries, targetMonth));
       await Clipboard.setStringAsync(prompt);
+      setAccountingEntryCount(entries.length);
       setCopyStatus("success");
     } catch {
       setCopyStatus("error");
@@ -61,6 +70,10 @@ export function AiAnalysisCard() {
       <View style={styles.metaBox}>
         <InfoRow label="対象期間" value="2026年6月" />
         <InfoRow label="含まれるデータ" value="会計 / 家計 / 投資 / 学習 / 月グラフ" />
+        <InfoRow
+          label="会計入力データ"
+          value={`保存済みデータを反映${accountingEntryCount === null ? "" : ` / ${accountingEntryCount}件`}`}
+        />
         <InfoRow label="出力形式" value="分析依頼文 + JSON" />
       </View>
 
