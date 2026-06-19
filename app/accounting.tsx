@@ -7,6 +7,7 @@ import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs"
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
 import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
 import type { AccountingEntry, AccountingEntryType } from "../lib/types/accounting";
 
@@ -15,6 +16,7 @@ export default function AccountingScreen() {
   const [entries, setEntries] = useState<AccountingEntry[]>(sampleAccountingEntries);
   const [successMessage, setSuccessMessage] = useState("");
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const monthlySummary = calculateMonthlyAccountingSummary(entries, "2026-06");
 
   useEffect(() => {
     return () => {
@@ -51,7 +53,7 @@ export default function AccountingScreen() {
             <Text style={styles.monthLabel}>2026年6月</Text>
           </View>
 
-          <AccountingSummaryCards />
+          <AccountingSummaryCards summary={monthlySummary} />
 
           <AccountingTypeTabs activeType={activeType} onChange={setActiveType} />
 

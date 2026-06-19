@@ -1,13 +1,19 @@
 import { StyleSheet, Text, View } from "react-native";
 
-const summaryItems = [
-  { label: "今月の売上", value: "¥2,450,000", tone: "#2563EB" },
-  { label: "今月の経費", value: "¥1,320,000", tone: "#EA580C" },
-  { label: "今月の利益", value: "¥1,130,000", tone: "#059669" },
-  { label: "家計支出", value: "¥320,000", tone: "#0F766E" }
-];
+import type { MonthlyAccountingSummary } from "../../lib/types/accounting";
 
-export function AccountingSummaryCards() {
+type AccountingSummaryCardsProps = {
+  summary: MonthlyAccountingSummary;
+};
+
+export function AccountingSummaryCards({ summary }: AccountingSummaryCardsProps) {
+  const summaryItems = [
+    { label: "今月の売上", value: formatYen(summary.revenueTotal), tone: "#2563EB" },
+    { label: "今月の経費", value: formatYen(summary.expenseTotal), tone: "#EA580C" },
+    { label: "今月の利益", value: formatYen(summary.profit), tone: summary.profit >= 0 ? "#059669" : "#B91C1C" },
+    { label: "家計支出", value: formatYen(summary.householdTotal), tone: "#0F766E" }
+  ];
+
   return (
     <View style={styles.grid}>
       {summaryItems.map((item) => (
@@ -20,6 +26,10 @@ export function AccountingSummaryCards() {
       ))}
     </View>
   );
+}
+
+function formatYen(value: number) {
+  return `¥${Math.round(value).toLocaleString("ja-JP")}`;
 }
 
 const styles = StyleSheet.create({

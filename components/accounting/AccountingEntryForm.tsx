@@ -9,6 +9,8 @@ import {
   getPaymentMethods,
   spendingJudgementOptions
 } from "../../lib/accounting/accountingOptions";
+import { getDefaultCostBehavior, getDefaultSpendingJudgement } from "../../lib/accounting/categoryRules";
+import { parseAmount, validateAccountingEntryInput } from "../../lib/accounting/validation";
 import type {
   AccountingEntry,
   AccountingEntryType,
@@ -34,14 +36,15 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const initialCategory = getCategories(type)[0] ?? "";
     setDate("2026-06-05");
     setAmount("");
-    setCategory(getCategories(type)[0] ?? "");
+    setCategory(initialCategory);
     setPaymentMethod(getPaymentMethods(type)[0] ?? "その他");
     setMemo("");
     setPartnerName("");
-    setCostBehavior("variable");
-    setSpendingJudgement("necessary");
+    setCostBehavior(getDefaultCostBehavior(initialCategory));
+    setSpendingJudgement(getDefaultSpendingJudgement(initialCategory));
     setError("");
   }, [type]);
 
@@ -50,23 +53,44 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
   const paymentMethods = getPaymentMethods(type);
   const needsCostFields = type === "expense" || type === "household";
 
+  const resetForm = () => {
+    const initialCategory = getCategories(type)[0] ?? "";
+    setDate("2026-06-05");
+    setAmount("");
+    setCategory(initialCategory);
+    setPaymentMethod(getPaymentMethods(type)[0] ?? "その他");
+    setMemo("");
+    setPartnerName("");
+    setCostBehavior(getDefaultCostBehavior(initialCategory));
+    setSpendingJudgement(getDefaultSpendingJudgement(initialCategory));
+    setError("");
+  };
+
+  const handleCategoryChange = (nextCategory: string) => {
+    setCategory(nextCategory);
+
+    if (needsCostFields) {
+      setCostBehavior(getDefaultCostBehavior(nextCategory));
+      setSpendingJudgement(getDefaultSpendingJudgement(nextCategory));
+    }
+  };
+
   const handleSubmit = () => {
-    const numericAmount = Number(amount.replace(/,/g, ""));
+    const errors = validateAccountingEntryInput({
+      type,
+      date,
+      amount,
+      category,
+      paymentMethod,
+      memo
+    });
 
-    if (!date.trim() || !amount.trim() || !category.trim() || !paymentMethod || !memo.trim()) {
-      setError("日付、金額、カテゴリ、支払方法、メモを入力してください。");
+    if (errors.length > 0) {
+      setError(errors[0]);
       return;
     }
 
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      setError("金額は1以上の数値で入力してください。");
-      return;
-    }
-
-    if (type === "revenue" && !partnerName.trim()) {
-      setError("売上では取引先名を入力してください。");
-      return;
-    }
+    const numericAmount = parseAmount(amount);
 
     onAdd({
       id: `${type}-${Date.now()}`,
@@ -81,15 +105,7 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
       spendingJudgement: needsCostFields ? spendingJudgement : undefined
     });
 
-    setDate("2026-06-05");
-    setAmount("");
-    setCategory(categories[0] ?? "");
-    setPaymentMethod(paymentMethods[0] ?? "その他");
-    setMemo("");
-    setPartnerName("");
-    setCostBehavior("variable");
-    setSpendingJudgement("necessary");
-    setError("");
+    resetForm();
   };
 
   return (
@@ -123,7 +139,7 @@ export function AccountingEntryForm({ type, onAdd }: AccountingEntryFormProps) {
         />
       </Field>
 
-      <OptionGroup label="カテゴリ" options={categories} selected={category} onSelect={setCategory} tone={tone} />
+      <OptionGroup label="カテゴリ" options={categories} selected={category} onSelect={handleCategoryChange} tone={tone} />
       <OptionGroup
         label="支払方法"
         options={paymentMethods}

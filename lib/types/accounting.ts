@@ -28,3 +28,16 @@ export type AccountingEntry = {
   creditAccount?: string;
   creditAmount?: number;
 };
+
+export type MonthlyAccountingSummary = {
+  month: string;
+  revenueTotal: number;
+  expenseTotal: number;
+  householdTotal: number;
+  profit: number;
+  estimatedTax: number;
+  investableAmount: number;
+  expenseRatio: number;
+  profitMargin: number;
+  entryCount: number;
+};

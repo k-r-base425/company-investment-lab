@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { accountingTypeTones, journalAccountOptions } from "../../lib/accounting/accountingOptions";
+import { parseAmount, validateJournalEntryInput } from "../../lib/accounting/validation";
 import type { AccountingEntry } from "../../lib/types/accounting";
 
 type JournalEntryFormProps = {
@@ -18,24 +19,23 @@ export function JournalEntryForm({ onAdd }: JournalEntryFormProps) {
   const [error, setError] = useState("");
 
   const tone = accountingTypeTones.journal;
-  const numericDebit = Number(debitAmount.replace(/,/g, ""));
-  const numericCredit = Number(creditAmount.replace(/,/g, ""));
+  const numericDebit = parseAmount(debitAmount);
+  const numericCredit = parseAmount(creditAmount);
   const amountsAreValid = Number.isFinite(numericDebit) && Number.isFinite(numericCredit) && numericDebit > 0 && numericCredit > 0;
   const balanced = amountsAreValid && numericDebit === numericCredit;
 
   const handleSubmit = () => {
-    if (!date.trim() || !debitAccount || !debitAmount.trim() || !creditAccount || !creditAmount.trim() || !memo.trim()) {
-      setError("日付、勘定科目、借方金額、貸方金額、摘要メモを入力してください。");
-      return;
-    }
+    const errors = validateJournalEntryInput({
+      date,
+      debitAccount,
+      debitAmount,
+      creditAccount,
+      creditAmount,
+      memo
+    });
 
-    if (!amountsAreValid) {
-      setError("借方金額と貸方金額は1以上の数値で入力してください。");
-      return;
-    }
-
-    if (!balanced) {
-      setError("借方・貸方の金額が一致していません。");
+    if (errors.length > 0) {
+      setError(errors[0]);
       return;
     }
 

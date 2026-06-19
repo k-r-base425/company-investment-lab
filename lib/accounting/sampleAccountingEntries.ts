@@ -43,5 +43,37 @@ export const sampleAccountingEntries: AccountingEntry[] = [
     debitAmount: 8000,
     creditAccount: "現金",
     creditAmount: 8000
+  },
+  {
+    id: "sample-revenue-2",
+    type: "revenue",
+    date: "2026-06-05",
+    amount: 180000,
+    category: "副業売上",
+    paymentMethod: "銀行振込",
+    memo: "副業コンサル",
+    partnerName: "サンプル顧問先"
+  },
+  {
+    id: "sample-expense-2",
+    type: "expense",
+    date: "2026-06-06",
+    amount: 6500,
+    category: "新聞図書費",
+    paymentMethod: "クレジット",
+    memo: "書籍購入",
+    costBehavior: "variable",
+    spendingJudgement: "investment"
+  },
+  {
+    id: "sample-household-2",
+    type: "household",
+    date: "2026-06-07",
+    amount: 95000,
+    category: "家賃",
+    paymentMethod: "銀行引落",
+    memo: "家賃",
+    costBehavior: "fixed",
+    spendingJudgement: "necessary"
   }
 ];

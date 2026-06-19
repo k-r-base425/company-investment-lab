@@ -52,6 +52,8 @@ export const householdCategories = [
   "その他生活費"
 ];
 
+export const paymentMethods: PaymentMethod[] = ["銀行振込", "現金", "クレジット", "電子マネー", "銀行引落", "その他"];
+
 export const revenuePaymentMethods: PaymentMethod[] = ["銀行振込", "現金", "クレジット", "その他"];
 
 export const expensePaymentMethods: PaymentMethod[] = ["現金", "クレジット", "銀行振込", "電子マネー", "その他"];
