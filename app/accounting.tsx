@@ -9,27 +9,70 @@ import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
+import {
+  deleteAccountingEntry,
+  getAccountingEntriesByMonth,
+  initAccountingStorage,
+  insertAccountingEntry,
+  seedAccountingEntriesIfEmpty
+} from "../lib/storage/accountingEntryRepository";
 import type { AccountingEntry, AccountingEntryType } from "../lib/types/accounting";
+
+const targetMonth = "2026-06";
 
 export default function AccountingScreen() {
   const [activeType, setActiveType] = useState<AccountingEntryType>("revenue");
-  const [entries, setEntries] = useState<AccountingEntry[]>(sampleAccountingEntries);
+  const [entries, setEntries] = useState<AccountingEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [storageError, setStorageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const monthlySummary = calculateMonthlyAccountingSummary(entries, "2026-06");
+  const monthlySummary = calculateMonthlyAccountingSummary(entries, targetMonth);
 
   useEffect(() => {
+    let canceled = false;
+
+    async function initializeStorage() {
+      try {
+        setIsLoading(true);
+        setStorageError("");
+        await initAccountingStorage();
+        await seedAccountingEntriesIfEmpty(sampleAccountingEntries);
+        const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+
+        if (!canceled) {
+          setEntries(savedEntries);
+        }
+      } catch {
+        if (!canceled) {
+          setStorageError("ローカル保存の読み込みに失敗しました。");
+          setEntries(sampleAccountingEntries.filter((entry) => entry.date.startsWith(targetMonth)));
+        }
+      } finally {
+        if (!canceled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    initializeStorage();
+
     return () => {
+      canceled = true;
+
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
       }
     };
   }, []);
 
-  const handleAddEntry = (entry: AccountingEntry) => {
-    setEntries((currentEntries) => [entry, ...currentEntries]);
-    setSuccessMessage("入力を追加しました");
+  const reloadEntries = async () => {
+    const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+    setEntries(savedEntries);
+  };
 
+  const showMessage = (message: string) => {
+    setSuccessMessage(message);
     if (successTimerRef.current) {
       clearTimeout(successTimerRef.current);
     }
@@ -38,6 +81,28 @@ export default function AccountingScreen() {
       setSuccessMessage("");
       successTimerRef.current = null;
     }, 2500);
+  };
+
+  const handleAddEntry = async (entry: AccountingEntry) => {
+    try {
+      setStorageError("");
+      await insertAccountingEntry(entry);
+      await reloadEntries();
+      showMessage("入力を追加しました");
+    } catch {
+      setStorageError("入力の保存に失敗しました。");
+    }
+  };
+
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      setStorageError("");
+      await deleteAccountingEntry(id);
+      await reloadEntries();
+      showMessage("削除しました");
+    } catch {
+      setStorageError("入力の削除に失敗しました。");
+    }
   };
 
   return (
@@ -55,6 +120,10 @@ export default function AccountingScreen() {
 
           <AccountingSummaryCards summary={monthlySummary} />
 
+          {isLoading ? <Text style={styles.statusMessage}>保存済みデータを読み込んでいます...</Text> : null}
+
+          {storageError ? <Text style={styles.errorMessage}>{storageError}</Text> : null}
+
           <AccountingTypeTabs activeType={activeType} onChange={setActiveType} />
 
           {activeType === "journal" ? (
@@ -65,7 +134,7 @@ export default function AccountingScreen() {
 
           {successMessage ? <Text style={styles.successMessage}>{successMessage}</Text> : null}
 
-          <RecentEntriesList entries={entries} />
+          <RecentEntriesList entries={entries} onDelete={handleDeleteEntry} />
         </View>
       </ScrollView>
       <BottomTabBar activeTab="accounting" />
@@ -144,6 +213,36 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     color: "#047857",
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 19,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    textAlign: "center",
+    width: "100%"
+  },
+  statusMessage: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE",
+    borderRadius: 8,
+    borderWidth: 1,
+    color: "#1D4ED8",
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 19,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    textAlign: "center",
+    width: "100%"
+  },
+  errorMessage: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+    borderRadius: 8,
+    borderWidth: 1,
+    color: "#B91C1C",
     fontSize: 13,
     fontWeight: "900",
     lineHeight: 19,

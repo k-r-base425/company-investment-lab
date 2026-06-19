@@ -52,6 +52,15 @@ npm run build
 
 SQLite設計、CSV/JSON出力、追加画面の実装は今後の工程で行います。
 
+## ローカル保存
+
+会計入力データはローカル保存されます。
+
+- ネイティブ実行ではSQLiteを使います
+- Web / GitHub Pages確認では`localStorage` fallbackを使います
+- ブラウザの`localStorage`を消すと、Web確認用の保存データは消えます
+- MVP確認では実データを入れず、サンプルデータだけを使ってください
+
 ## GitHub Pagesでの確認
 
 このプロジェクトはExpo Webとして静的ビルドし、GitHub Pagesで確認できます。

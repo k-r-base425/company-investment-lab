@@ -27,6 +27,8 @@ export type AccountingEntry = {
   debitAmount?: number;
   creditAccount?: string;
   creditAmount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type MonthlyAccountingSummary = {

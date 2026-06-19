@@ -1,13 +1,14 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { accountingTypeLabels, accountingTypeTones } from "../../lib/accounting/accountingOptions";
 import type { AccountingEntry } from "../../lib/types/accounting";
 
 type RecentEntriesListProps = {
   entries: AccountingEntry[];
+  onDelete: (id: string) => void;
 };
 
-export function RecentEntriesList({ entries }: RecentEntriesListProps) {
+export function RecentEntriesList({ entries, onDelete }: RecentEntriesListProps) {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -17,7 +18,7 @@ export function RecentEntriesList({ entries }: RecentEntriesListProps) {
 
       <View style={styles.list}>
         {entries.map((entry) => (
-          <EntryRow entry={entry} key={entry.id} />
+          <EntryRow entry={entry} key={entry.id} onDelete={onDelete} />
         ))}
       </View>
     </View>
@@ -26,18 +27,28 @@ export function RecentEntriesList({ entries }: RecentEntriesListProps) {
 
 type EntryRowProps = {
   entry: AccountingEntry;
+  onDelete: (id: string) => void;
 };
 
-function EntryRow({ entry }: EntryRowProps) {
+function EntryRow({ entry, onDelete }: EntryRowProps) {
   const tone = accountingTypeTones[entry.type];
 
   return (
     <View style={styles.row}>
       <View style={styles.rowTop}>
-        <Text style={styles.date}>{entry.date}</Text>
-        <View style={[styles.typeBadge, { backgroundColor: tone }]}>
-          <Text style={styles.typeBadgeText}>{accountingTypeLabels[entry.type]}</Text>
+        <View style={styles.rowMeta}>
+          <Text style={styles.date}>{entry.date}</Text>
+          <View style={[styles.typeBadge, { backgroundColor: tone }]}>
+            <Text style={styles.typeBadgeText}>{accountingTypeLabels[entry.type]}</Text>
+          </View>
         </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onDelete(entry.id)}
+          style={({ pressed }) => [styles.deleteButton, pressed && styles.deleteButtonPressed]}
+        >
+          <Text style={styles.deleteButtonText}>削除</Text>
+        </Pressable>
       </View>
 
       <Text style={styles.memo}>{entry.memo}</Text>
@@ -109,6 +120,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10
   },
+  rowMeta: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    minWidth: 0
+  },
   date: {
     color: "#64748B",
     fontSize: 12,
@@ -121,6 +140,22 @@ const styles = StyleSheet.create({
   },
   typeBadgeText: {
     color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "900"
+  },
+  deleteButton: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6
+  },
+  deleteButtonPressed: {
+    opacity: 0.78
+  },
+  deleteButtonText: {
+    color: "#B91C1C",
     fontSize: 11,
     fontWeight: "900"
   },
