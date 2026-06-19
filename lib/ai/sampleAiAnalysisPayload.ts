@@ -1,65 +1,15 @@
-import type { AiAnalysisDay, AiAnalysisPayload } from "../types/ai";
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { sampleAccountingEntries } from "../accounting/sampleAccountingEntries";
+import type { AiAnalysisPayload } from "../types/ai";
 
-const dailyValues: Array<number | null> = [
-  120000,
-  86000,
-  148000,
-  94000,
-  null,
-  175000,
-  98000,
-  132000,
-  76000,
-  165000,
-  118000,
-  null,
-  91000,
-  142000,
-  188000,
-  104000,
-  72000,
-  128000,
-  null,
-  155000,
-  98000,
-  136000,
-  121000,
-  172000,
-  69000,
-  null,
-  149000,
-  112000,
-  184000,
-  126000
-];
-
-function getStatus(value: number | null): AiAnalysisDay["status"] {
-  if (value === null) {
-    return "empty";
-  }
-
-  if (value >= 150000) {
-    return "high";
-  }
-
-  if (value >= 100000) {
-    return "middle";
-  }
-
-  return "low";
-}
-
-export const sampleMonthlyChartDays: AiAnalysisDay[] = dailyValues.map((value, index) => {
-  const day = index + 1;
-  return {
-    date: `2026-06-${String(day).padStart(2, "0")}`,
-    day,
-    value,
-    status: getStatus(value)
-  };
+const sampleMonthlyChartData = buildMonthlyChartFromAccountingEntries({
+  entries: sampleAccountingEntries,
+  metric: "profit",
+  month: "2026-06"
 });
+
+export const sampleMonthlyChartDays = sampleMonthlyChartData.days;
 
 export const sampleAiAnalysisPayload: AiAnalysisPayload = {
   period: "2026-06",
@@ -125,8 +75,9 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
   },
   monthlyChart: {
     month: "2026-06",
+    metric: "profit",
     unit: "day",
-    notes: "未入力日は null。status は high / middle / low / empty。",
+    notes: "保存済み会計入力データから生成。未入力日は null。status は high / middle / low / empty。",
     days: sampleMonthlyChartDays
   },
   learning: {

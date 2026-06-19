@@ -1,4 +1,5 @@
 import type { AccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import type { MonthlyChartDay, MonthlyChartMetric } from "./monthlyChart";
 
 export type AiAnalysisPayload = {
   period: string;
@@ -35,14 +36,10 @@ export type AiAnalysisPayload = {
   };
   monthlyChart: {
     month: string;
+    metric: MonthlyChartMetric;
     unit: "day";
     notes: string;
-    days: {
-      date: string;
-      day: number;
-      value: number | null;
-      status: "high" | "middle" | "low" | "empty";
-    }[];
+    days: MonthlyChartDay[];
   };
   learning: {
     currentTopics: string[];

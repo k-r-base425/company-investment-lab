@@ -1,4 +1,5 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
@@ -7,6 +8,7 @@ export function buildHomeAiAnalysisPayload(entries: AccountingEntry[], month: st
   const accountingAnalysis = buildAccountingAnalysisPayload(entries, month);
   const { summary, categoryBreakdown } = accountingAnalysis;
   const householdCostBreakdown = buildHouseholdCostBreakdown(entries, month);
+  const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
 
   return {
     ...sampleAiAnalysisPayload,
@@ -29,7 +31,14 @@ export function buildHomeAiAnalysisPayload(entries: AccountingEntry[], month: st
         amount: item.amount
       }))
     },
-    accountingAnalysis
+    accountingAnalysis,
+    monthlyChart: {
+      month,
+      metric: "profit",
+      unit: "day",
+      notes: "保存済み会計入力データから生成。未入力日は null。status は high / middle / low / empty。",
+      days: monthlyChartData.days
+    }
   };
 }
 

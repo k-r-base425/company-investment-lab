@@ -6,16 +6,15 @@ import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
 import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
 import { HomeDataStatus } from "../components/home/HomeDataStatus";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
+import { HomeMonthlyChartCard } from "../components/home/HomeMonthlyChartCard";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
-import { sampleMonthlyChartDays } from "../lib/ai/sampleAiAnalysisPayload";
 import { buildHomeKpisFromAccounting } from "../lib/home/buildHomeKpisFromAccounting";
 import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
 import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../lib/storage/accountingEntryRepository";
 import type { AccountingEntry } from "../lib/types/accounting";
-import type { AiAnalysisDay } from "../lib/types/ai";
 
 const targetMonth = "2026-06";
 const monthLabel = "2026年6月";
@@ -88,7 +87,14 @@ export default function HomeScreen() {
 
           <HomeKpiGrid kpis={kpis} />
 
-          <MonthlyChart days={sampleMonthlyChartDays} />
+          <HomeMonthlyChartCard
+            entries={accountingEntries}
+            errorMessage={errorMessage}
+            isFallback={isFallback}
+            isLoading={isLoading}
+            month={targetMonth}
+            monthLabel={monthLabel}
+          />
 
           <AssetAllocationCard summary={sampleAssetAllocation} />
 
@@ -109,51 +115,6 @@ export default function HomeScreen() {
   );
 }
 
-type MonthlyChartProps = {
-  days: AiAnalysisDay[];
-};
-
-function MonthlyChart({ days }: MonthlyChartProps) {
-  const maxValue = Math.max(...days.map((day) => day.value ?? 0));
-
-  return (
-    <View style={styles.chartCard}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.panelTitle}>月グラフ</Text>
-        <Text style={styles.sectionHint}>日別売上サンプル</Text>
-      </View>
-
-      <View style={styles.chartGrid}>
-        {days.map((day) => {
-          const height = day.value === null ? 8 : Math.max((day.value / maxValue) * 96, 18);
-          return (
-            <View key={day.date} style={styles.barColumn}>
-              <View
-                style={[
-                  styles.bar,
-                  {
-                    height,
-                    backgroundColor: getBarColor(day.status),
-                    opacity: day.status === "empty" ? 0.55 : 1
-                  }
-                ]}
-              />
-              {day.day % 5 === 0 ? <Text style={styles.barLabel}>{day.day}</Text> : <View style={styles.barLabelSpace} />}
-            </View>
-          );
-        })}
-      </View>
-
-      <View style={styles.legendRow}>
-        <Legend color="#2563EB" label="高" />
-        <Legend color="#10B981" label="中" />
-        <Legend color="#F97316" label="低" />
-        <Legend color="#CBD5E1" label="未入力" />
-      </View>
-    </View>
-  );
-}
-
 type ShortcutProps = {
   label: string;
 };
@@ -164,35 +125,6 @@ function Shortcut({ label }: ShortcutProps) {
       <Text style={styles.shortcutText}>{label}</Text>
     </View>
   );
-}
-
-type LegendProps = {
-  color: string;
-  label: string;
-};
-
-function Legend({ color, label }: LegendProps) {
-  return (
-    <View style={styles.legendItem}>
-      <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <Text style={styles.legendText}>{label}</Text>
-    </View>
-  );
-}
-
-function getBarColor(status: AiAnalysisDay["status"]) {
-  switch (status) {
-    case "high":
-      return "#2563EB";
-    case "middle":
-      return "#10B981";
-    case "low":
-      return "#F97316";
-    case "empty":
-      return "#CBD5E1";
-    default:
-      return "#CBD5E1";
-  }
 }
 
 const styles = StyleSheet.create({
@@ -253,82 +185,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     paddingHorizontal: 10,
     paddingVertical: 8
-  },
-  chartCard: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 16,
-    padding: 16,
-    width: "100%"
-  },
-  sectionHeader: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 14,
-    minWidth: 0
-  },
-  sectionHint: {
-    color: "#64748B",
-    fontSize: 12,
-    fontWeight: "700"
-  },
-  panelTitle: {
-    color: "#0F172A",
-    fontSize: 16,
-    fontWeight: "900",
-    letterSpacing: 0
-  },
-  chartGrid: {
-    alignItems: "flex-end",
-    flexDirection: "row",
-    gap: 3,
-    height: 126,
-    minWidth: 0,
-    width: "100%"
-  },
-  barColumn: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "flex-end"
-  },
-  bar: {
-    borderRadius: 4,
-    minWidth: 5,
-    width: "100%"
-  },
-  barLabel: {
-    color: "#94A3B8",
-    fontSize: 9,
-    fontWeight: "800",
-    marginTop: 6
-  },
-  barLabelSpace: {
-    height: 16
-  },
-  legendRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 12
-  },
-  legendItem: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 5
-  },
-  legendDot: {
-    borderRadius: 999,
-    height: 8,
-    width: 8
-  },
-  legendText: {
-    color: "#64748B",
-    fontSize: 11,
-    fontWeight: "700"
   },
   shortcutGrid: {
     flexDirection: "row",
