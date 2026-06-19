@@ -4,45 +4,34 @@ export const sampleLearningTopics: LearningTopic[] = [
   {
     id: "per-pbr-roe",
     title: "PER / PBR / ROE",
-    category: "investment_indicator",
-    categoryLabel: "投資指標",
+    category: "投資指標",
+    description: "株価指標の基本と使い方を学びます。",
     estimatedMinutes: 15,
+    difficultyLabel: "Lv.4 推奨",
     progressRate: 0.75,
-    description: "株価指標の基本と使い方を学ぶ",
-    reason: "投資判断の基礎になるため",
-    tone: "green"
+    recommendationReason: "投資損益と資産配分を見直す前に、企業価値の見方を確認しましょう。",
+    accentTone: "green"
   },
   {
     id: "depreciation",
     title: "簿記2級：固定資産と減価償却",
-    category: "bookkeeping",
-    categoryLabel: "商業簿記",
+    category: "商業簿記",
+    description: "固定資産の取得、減価償却、決算整理を学びます。",
     estimatedMinutes: 20,
+    difficultyLabel: "Lv.4 推奨",
     progressRate: 0.6,
-    description: "固定資産の取得・減価償却・売却を理解する",
-    reason: "事業資産の管理に関係するため",
-    tone: "blue"
+    recommendationReason: "事業用資産や設備投資を判断するための基礎になります。",
+    accentTone: "blue"
   },
   {
     id: "profit-cashflow",
     title: "利益とキャッシュフローの違い",
-    category: "financial_statement",
-    categoryLabel: "財務諸表",
+    category: "財務分析",
+    description: "利益が出ていても現金が不足する理由を学びます。",
     estimatedMinutes: 12,
+    difficultyLabel: "Lv.3 推奨",
     progressRate: 0.4,
-    description: "利益が出ていても現金が減る理由を学ぶ",
-    reason: "経営判断で重要なため",
-    tone: "orange"
-  },
-  {
-    id: "expense-profit-margin",
-    title: "経費率と利益率",
-    category: "management",
-    categoryLabel: "経営判断",
-    estimatedMinutes: 10,
-    progressRate: 0.3,
-    description: "売上に対して経費と利益がどれくらいあるかを見る",
-    reason: "今月の事業判断に使えるため",
-    tone: "teal"
+    recommendationReason: "投資可能額と現金比率を正しく判断するために重要です。",
+    accentTone: "orange"
   }
 ];

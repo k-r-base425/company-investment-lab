@@ -28,9 +28,9 @@ export default function HomeScreen() {
 
         <AssetAllocationCard summary={sampleAssetAllocation} />
 
-        <AiAnalysisCard />
-
         <TodayLearningCard topics={sampleLearningTopics} />
+
+        <AiAnalysisCard />
 
         <View style={styles.shortcutGrid}>
           <Shortcut label="会計入力" />

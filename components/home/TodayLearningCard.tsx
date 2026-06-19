@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { LearningTopic } from "../../lib/types/learning";
-import { LearningTopicCard } from "./LearningTopicCard";
+import { LearningTopicItem } from "./LearningTopicItem";
 
 type TodayLearningCardProps = {
   topics: LearningTopic[];
@@ -18,7 +18,7 @@ export function TodayLearningCard({ topics }: TodayLearningCardProps) {
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
           <Text style={styles.title}>今日の学習</Text>
-          <Text style={styles.subtitle}>実データとつなげて、数字の見方を鍛える</Text>
+          <Text style={styles.subtitle}>今日の数字とつながるテーマ</Text>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -31,7 +31,7 @@ export function TodayLearningCard({ topics }: TodayLearningCardProps) {
 
       <View style={styles.topicList}>
         {topics.map((topic) => (
-          <LearningTopicCard key={topic.id} topic={topic} />
+          <LearningTopicItem key={topic.id} topic={topic} />
         ))}
       </View>
     </View>

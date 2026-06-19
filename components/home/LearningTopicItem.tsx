@@ -2,22 +2,21 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { LearningTopic } from "../../lib/types/learning";
 
-type LearningTopicCardProps = {
+type LearningTopicItemProps = {
   topic: LearningTopic;
 };
 
-const toneColors: Record<LearningTopic["tone"], { accent: string; soft: string; border: string }> = {
+const toneColors: Record<LearningTopic["accentTone"], { accent: string; soft: string; border: string }> = {
   blue: { accent: "#2563EB", soft: "#EFF6FF", border: "#BFDBFE" },
   green: { accent: "#059669", soft: "#ECFDF5", border: "#A7F3D0" },
   purple: { accent: "#7C3AED", soft: "#F5F3FF", border: "#DDD6FE" },
   orange: { accent: "#F97316", soft: "#FFF7ED", border: "#FDBA74" },
-  teal: { accent: "#0F766E", soft: "#F0FDFA", border: "#99F6E4" },
-  navy: { accent: "#1E3A8A", soft: "#EFF6FF", border: "#BFDBFE" }
+  teal: { accent: "#0F766E", soft: "#F0FDFA", border: "#99F6E4" }
 };
 
-export function LearningTopicCard({ topic }: LearningTopicCardProps) {
-  const colors = toneColors[topic.tone];
-  const progressPercent = Math.round(topic.progressRate * 100);
+export function LearningTopicItem({ topic }: LearningTopicItemProps) {
+  const colors = toneColors[topic.accentTone];
+  const progressPercent = Math.round(Math.min(Math.max(topic.progressRate, 0), 1) * 100);
 
   const handlePress = () => {
     // TODO: 学習ページ本体を作成したらExpo Routerで該当トピックへ遷移する。
@@ -25,12 +24,17 @@ export function LearningTopicCard({ topic }: LearningTopicCardProps) {
   };
 
   return (
-    <View style={[styles.card, { borderColor: colors.border }]}>
-      <View style={styles.headerRow}>
+    <View style={[styles.item, { borderColor: colors.border }]}>
+      <View style={styles.metaRow}>
         <View style={[styles.categoryBadge, { backgroundColor: colors.soft }]}>
-          <Text style={[styles.categoryText, { color: colors.accent }]}>{topic.categoryLabel}</Text>
+          <Text style={[styles.categoryText, { color: colors.accent }]}>{topic.category}</Text>
         </View>
-        <Text style={styles.timeText}>約{topic.estimatedMinutes}分</Text>
+        <View style={styles.metaPill}>
+          <Text style={styles.metaPillText}>約{topic.estimatedMinutes}分</Text>
+        </View>
+        <View style={styles.metaPill}>
+          <Text style={styles.metaPillText}>{topic.difficultyLabel}</Text>
+        </View>
       </View>
 
       <Text style={styles.title}>{topic.title}</Text>
@@ -46,7 +50,7 @@ export function LearningTopicCard({ topic }: LearningTopicCardProps) {
 
       <View style={styles.reasonBox}>
         <Text style={styles.reasonLabel}>推奨理由</Text>
-        <Text style={styles.reasonText}>{topic.reason}</Text>
+        <Text style={styles.reasonText}>{topic.recommendationReason}</Text>
       </View>
 
       <Pressable
@@ -65,18 +69,18 @@ export function LearningTopicCard({ topic }: LearningTopicCardProps) {
 }
 
 const styles = StyleSheet.create({
-  card: {
+  item: {
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
     borderWidth: 1,
     padding: 14,
     width: "100%"
   },
-  headerRow: {
+  metaRow: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
+    flexWrap: "wrap",
+    gap: 7,
     marginBottom: 10
   },
   categoryBadge: {
@@ -89,9 +93,17 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0
   },
-  timeText: {
-    color: "#64748B",
-    fontSize: 12,
+  metaPill: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 5
+  },
+  metaPillText: {
+    color: "#475569",
+    fontSize: 11,
     fontWeight: "800"
   },
   title: {
