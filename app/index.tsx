@@ -3,12 +3,12 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
 import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
-import { sampleAiAnalysisPayload, sampleMonthlyChartDays } from "../lib/ai/sampleAiAnalysisPayload";
+import { TodayLearningCard } from "../components/home/TodayLearningCard";
+import { sampleMonthlyChartDays } from "../lib/ai/sampleAiAnalysisPayload";
 import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
 import { sampleHomeKpis } from "../lib/home/sampleHomeSummary";
+import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
 import type { AiAnalysisDay } from "../lib/types/ai";
-
-const learningProgress = Math.round(sampleAiAnalysisPayload.learning.progressRate * 100);
 
 export default function HomeScreen() {
   return (
@@ -30,15 +30,7 @@ export default function HomeScreen() {
 
         <AiAnalysisCard />
 
-        <View style={styles.learningPanel}>
-          <Text style={styles.panelTitle}>今日の学習</Text>
-          <Text style={styles.learningTitle}>PER / PBR / ROE</Text>
-          <Text style={styles.learningBody}>投資指標を利益率と資本効率に結びつけて確認します。</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${learningProgress}%` }]} />
-          </View>
-          <Text style={styles.progressText}>学習進捗 {learningProgress}%</Text>
-        </View>
+        <TodayLearningCard topics={sampleLearningTopics} />
 
         <View style={styles.shortcutGrid}>
           <Shortcut label="会計入力" />
@@ -255,46 +247,6 @@ const styles = StyleSheet.create({
     color: "#64748B",
     fontSize: 11,
     fontWeight: "700"
-  },
-  learningPanel: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 16,
-    padding: 14,
-    width: "100%"
-  },
-  learningTitle: {
-    color: "#111827",
-    fontSize: 14,
-    fontWeight: "900",
-    lineHeight: 20,
-    marginTop: 12
-  },
-  learningBody: {
-    color: "#64748B",
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6
-  },
-  progressTrack: {
-    backgroundColor: "#E2E8F0",
-    borderRadius: 999,
-    height: 8,
-    marginTop: 14,
-    overflow: "hidden"
-  },
-  progressFill: {
-    backgroundColor: "#10B981",
-    borderRadius: 999,
-    height: "100%"
-  },
-  progressText: {
-    color: "#047857",
-    fontSize: 12,
-    fontWeight: "800",
-    marginTop: 8
   },
   shortcutGrid: {
     flexDirection: "row",
