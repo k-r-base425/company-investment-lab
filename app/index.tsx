@@ -1,8 +1,10 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
+import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
 import { sampleAiAnalysisPayload, sampleMonthlyChartDays } from "../lib/ai/sampleAiAnalysisPayload";
+import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
 import { sampleHomeKpis } from "../lib/home/sampleHomeSummary";
 import type { AiAnalysisDay } from "../lib/types/ai";
 
@@ -24,32 +26,19 @@ export default function HomeScreen() {
 
         <MonthlyChart days={sampleMonthlyChartDays} />
 
-        <View style={styles.twoColumnSection}>
-          <View style={styles.panel}>
-            <Text style={styles.panelTitle}>資産配分</Text>
-            {sampleAiAnalysisPayload.investment.assets.map((asset) => (
-              <View key={asset.assetType} style={styles.allocationRow}>
-                <Text style={styles.allocationName}>{asset.name}</Text>
-                <View style={styles.allocationTrack}>
-                  <View style={[styles.allocationFill, { width: `${asset.ratio * 100}%` }]} />
-                </View>
-                <Text style={styles.allocationRatio}>{Math.round(asset.ratio * 100)}%</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.panel}>
-            <Text style={styles.panelTitle}>今日の学習</Text>
-            <Text style={styles.learningTitle}>PER / PBR / ROE</Text>
-            <Text style={styles.learningBody}>投資指標を利益率と資本効率に結びつけて確認します。</Text>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${learningProgress}%` }]} />
-            </View>
-            <Text style={styles.progressText}>学習進捗 {learningProgress}%</Text>
-          </View>
-        </View>
+        <AssetAllocationCard summary={sampleAssetAllocation} />
 
         <AiAnalysisCard />
+
+        <View style={styles.learningPanel}>
+          <Text style={styles.panelTitle}>今日の学習</Text>
+          <Text style={styles.learningTitle}>PER / PBR / ROE</Text>
+          <Text style={styles.learningBody}>投資指標を利益率と資本効率に結びつけて確認します。</Text>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${learningProgress}%` }]} />
+          </View>
+          <Text style={styles.progressText}>学習進捗 {learningProgress}%</Text>
+        </View>
 
         <View style={styles.shortcutGrid}>
           <Shortcut label="会計入力" />
@@ -267,45 +256,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700"
   },
-  twoColumnSection: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 16
-  },
-  panel: {
+  learningPanel: {
     backgroundColor: "#FFFFFF",
     borderColor: "#E5E7EB",
     borderRadius: 8,
     borderWidth: 1,
+    marginTop: 16,
     padding: 14,
-    width: "48.5%"
-  },
-  allocationRow: {
-    marginTop: 11
-  },
-  allocationName: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "800",
-    marginBottom: 6
-  },
-  allocationTrack: {
-    backgroundColor: "#E2E8F0",
-    borderRadius: 999,
-    height: 7,
-    overflow: "hidden"
-  },
-  allocationFill: {
-    backgroundColor: "#4F46E5",
-    borderRadius: 999,
-    height: "100%"
-  },
-  allocationRatio: {
-    color: "#64748B",
-    fontSize: 11,
-    fontWeight: "800",
-    marginTop: 4
+    width: "100%"
   },
   learningTitle: {
     color: "#111827",
