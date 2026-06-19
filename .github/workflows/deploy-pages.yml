@@ -23,6 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -32,16 +35,62 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Clean previous build
+        run: rm -rf dist
+
       - name: Build Expo Web
         run: npm run build
 
+      - name: Inspect dist
+        run: |
+          echo "=== dist files ==="
+          find dist -maxdepth 3 -type f | sort | head -100
+          echo "=== dist root ==="
+          ls -la dist
+
+      - name: Add deployment check file
+        run: |
+          echo "deployed_from=GitHub Actions" > dist/deploy-check.txt
+          echo "repo=company-investment-lab" >> dist/deploy-check.txt
+          echo "sha=${GITHUB_SHA}" >> dist/deploy-check.txt
+          echo "date_utc=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> dist/deploy-check.txt
+
       - name: Disable Jekyll
         run: touch dist/.nojekyll
+
+      - name: Verify Expo build output
+        run: |
+          test -f dist/index.html
+
+          echo "=== Check README text is not in dist ==="
+          if grep -R --text -n "技術スタック" dist; then
+            echo "README text was found in dist. This means the deployed artifact is not the Expo app."
+            exit 1
+          fi
+
+          if grep -R --text -n "詳細な仕様は" dist; then
+            echo "README footer text was found in dist. This means README content is being exported."
+            exit 1
+          fi
+
+          echo "=== Check app text exists in dist ==="
+          if ! grep -R --text -n "ダッシュボード" dist; then
+            echo "Expected app text was not found in dist."
+            echo "Expo app may not be exported correctly."
+            exit 1
+          fi
+
+          if ! grep -R --text -n "AI分析" dist; then
+            echo "Expected AI analysis text was not found in dist."
+            echo "Home AI card may not be included in the export."
+            exit 1
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+          include-hidden-files: true
 
   deploy:
     environment:

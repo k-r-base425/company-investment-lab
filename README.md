@@ -73,6 +73,30 @@ https://k-r-base425.github.io/company-investment-lab/
 - CSV、SQLite DB、個人情報入り画像をコミットしない
 - GitHub Pagesは公開URLになるため、表示内容に個人情報を含めない
 
+## GitHub Pagesデプロイ確認
+
+公開URL：
+
+https://k-r-base425.github.io/company-investment-lab/
+
+デプロイ確認ファイル：
+
+https://k-r-base425.github.io/company-investment-lab/deploy-check.txt
+
+確認方法：
+
+1. GitHub Actionsの Deploy Expo Web to GitHub Pages が成功しているか確認する
+2. deploy-check.txt が表示されるか確認する
+3. deploy-check.txt に最新のcommit shaが出ているか確認する
+4. 公開URLでREADMEではなくアプリ画面が表示されるか確認する
+
+READMEが表示される場合：
+
+- GitHub Pages Source が GitHub Actions になっているか確認
+- workflowを手動再実行する
+- distにREADME本文が混ざっていないかActionsログで確認する
+- deploy-check.txt が表示されるか確認する
+
 ## 注意事項
 
 - `.env` と `.env.*` はGit管理しません
