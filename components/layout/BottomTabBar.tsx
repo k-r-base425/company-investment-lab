@@ -5,7 +5,7 @@ const tabs = [
   { id: "home", label: "ホーム", icon: "H", href: "/" },
   { id: "accounting", label: "会計", icon: "A", href: "/accounting" },
   { id: "investment", label: "投資", icon: "I" },
-  { id: "learning", label: "学習", icon: "L" },
+  { id: "learning", label: "学習", icon: "L", href: "/learning" },
   { id: "settings", label: "設定", icon: "S" }
 ] as const;
 

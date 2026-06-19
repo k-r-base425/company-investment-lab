@@ -2,6 +2,9 @@ import * as SQLite from "expo-sqlite";
 
 import {
   accountingDatabaseName,
+  createAiAnalysisRunsCreatedAtIndexSql,
+  createAiAnalysisRunsPeriodIndexSql,
+  createAiAnalysisRunsTableSql,
   createAccountingEntriesDateIndexSql,
   createAccountingEntriesTableSql,
   createAccountingEntriesTypeIndexSql
@@ -22,4 +25,7 @@ export async function initAccountingDatabase() {
   await database.execAsync(createAccountingEntriesTableSql);
   await database.execAsync(createAccountingEntriesDateIndexSql);
   await database.execAsync(createAccountingEntriesTypeIndexSql);
+  await database.execAsync(createAiAnalysisRunsTableSql);
+  await database.execAsync(createAiAnalysisRunsPeriodIndexSql);
+  await database.execAsync(createAiAnalysisRunsCreatedAtIndexSql);
 }

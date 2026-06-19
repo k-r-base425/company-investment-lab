@@ -4,10 +4,12 @@ import * as Clipboard from "expo-clipboard";
 
 import { buildAiAnalysisPrompt } from "../../lib/ai/buildAiAnalysisPrompt";
 import { buildHomeAiAnalysisPayload } from "../../lib/ai/buildHomeAiAnalysisPayload";
+import { createAiAnalysisRun } from "../../lib/ai/createAiAnalysisRun";
 import { sampleAccountingEntries } from "../../lib/accounting/sampleAccountingEntries";
+import { initAiAnalysisRunStorage, insertAiAnalysisRun } from "../../lib/storage/aiAnalysisRunRepository";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
 
-type CopyStatus = "idle" | "success" | "error";
+type CopyStatus = "idle" | "success" | "historyError" | "error";
 
 const targetMonth = "2026-06";
 
@@ -40,10 +42,18 @@ export function AiAnalysisCard() {
       await initAccountingStorage();
       const savedEntries = await getAccountingEntriesByMonth(targetMonth);
       const entries = savedEntries.length > 0 ? savedEntries : sampleAccountingEntries;
-      const prompt = buildAiAnalysisPrompt(buildHomeAiAnalysisPayload(entries, targetMonth));
+      const payload = buildHomeAiAnalysisPayload(entries, targetMonth);
+      const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);
       setAccountingEntryCount(entries.length);
-      setCopyStatus("success");
+
+      try {
+        await initAiAnalysisRunStorage();
+        await insertAiAnalysisRun(createAiAnalysisRun({ payload, period: targetMonth, promptText: prompt }));
+        setCopyStatus("success");
+      } catch {
+        setCopyStatus("historyError");
+      }
     } catch {
       setCopyStatus("error");
     } finally {
@@ -86,12 +96,25 @@ export function AiAnalysisCard() {
       </Pressable>
 
       {copyStatus !== "idle" ? (
-        <Text style={[styles.feedback, copyStatus === "error" && styles.feedbackError]}>
-          {copyStatus === "success" ? "コピーしました" : "コピーに失敗しました"}
+        <Text style={[styles.feedback, copyStatus !== "success" && styles.feedbackError]}>
+          {getFeedbackMessage(copyStatus)}
         </Text>
       ) : null}
     </View>
   );
+}
+
+function getFeedbackMessage(status: CopyStatus) {
+  switch (status) {
+    case "success":
+      return "コピーしました。履歴にも保存しました";
+    case "historyError":
+      return "コピーしました。履歴保存に失敗しました";
+    case "error":
+      return "コピーに失敗しました";
+    default:
+      return "";
+  }
 }
 
 type InfoRowProps = {
