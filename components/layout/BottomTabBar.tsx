@@ -1,24 +1,40 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 const tabs = [
-  { id: "home", label: "ホーム", icon: "H" },
-  { id: "accounting", label: "会計", icon: "A" },
+  { id: "home", label: "ホーム", icon: "H", href: "/" },
+  { id: "accounting", label: "会計", icon: "A", href: "/accounting" },
   { id: "investment", label: "投資", icon: "I" },
   { id: "learning", label: "学習", icon: "L" },
   { id: "settings", label: "設定", icon: "S" }
-];
+] as const;
 
-export function BottomTabBar() {
+type BottomTabId = (typeof tabs)[number]["id"];
+
+type BottomTabBarProps = {
+  activeTab?: BottomTabId;
+};
+
+export function BottomTabBar({ activeTab = "home" }: BottomTabBarProps) {
+  const router = useRouter();
+
   return (
     <View pointerEvents="box-none" style={styles.shell}>
       <View style={styles.bar}>
         {tabs.map((tab) => {
-          const active = tab.id === "home";
+          const active = tab.id === activeTab;
           return (
             <Pressable
               accessibilityRole="button"
               key={tab.id}
-              onPress={() => console.log(`Open ${tab.id} tab`)}
+              onPress={() => {
+                if ("href" in tab) {
+                  router.push(tab.href);
+                  return;
+                }
+
+                console.log(`Open ${tab.id} tab`);
+              }}
               style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.tabPressed]}
             >
               <View style={[styles.iconWrap, active && styles.iconWrapActive]}>

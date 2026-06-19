@@ -42,7 +42,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-      <BottomTabBar />
+      <BottomTabBar activeTab="home" />
     </View>
   );
 }
