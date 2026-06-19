@@ -68,9 +68,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
     borderWidth: 1,
+    flexBasis: "48%",
+    flexGrow: 1,
     minHeight: 154,
+    minWidth: 0,
     padding: 13,
-    width: "48.5%",
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.05,
@@ -87,6 +89,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+    minWidth: 0,
     marginBottom: 10
   },
   iconBadge: {
@@ -94,6 +97,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     minHeight: 28,
     justifyContent: "center",
+    maxWidth: "78%",
     paddingHorizontal: 8
   },
   iconText: {
@@ -111,6 +115,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "900",
     letterSpacing: 0,
+    minWidth: 0,
     marginBottom: 7
   },
   value: {
@@ -142,6 +147,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     minHeight: 26,
+    minWidth: 0,
     paddingHorizontal: 8,
     paddingVertical: 5
   },

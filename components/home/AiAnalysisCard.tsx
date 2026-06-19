@@ -107,13 +107,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
-    elevation: 4
+    elevation: 4,
+    width: "100%"
   },
   headerRow: {
     alignItems: "flex-start",
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12
+    gap: 12,
+    minWidth: 0
   },
   eyebrow: {
     color: "#6366F1",

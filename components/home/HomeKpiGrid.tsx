@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10
+    gap: 10,
+    width: "100%"
   }
 });

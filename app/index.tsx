@@ -4,6 +4,7 @@ import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
 import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
+import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { sampleMonthlyChartDays } from "../lib/ai/sampleAiAnalysisPayload";
 import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
 import { sampleHomeKpis } from "../lib/home/sampleHomeSummary";
@@ -12,34 +13,37 @@ import type { AiAnalysisDay } from "../lib/types/ai";
 
 export default function HomeScreen() {
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.contentInner}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.kicker}>Account Invest Lab</Text>
-            <Text style={styles.heading}>ダッシュボード</Text>
+    <View style={styles.root}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <View style={styles.contentInner}>
+          <View style={styles.header}>
+            <View style={styles.headerText}>
+              <Text style={styles.kicker}>Account Invest Lab</Text>
+              <Text style={styles.heading}>ダッシュボード</Text>
+            </View>
+            <Text style={styles.monthLabel}>2026年6月</Text>
           </View>
-          <Text style={styles.monthLabel}>2026年6月</Text>
+
+          <HomeKpiGrid kpis={sampleHomeKpis} />
+
+          <MonthlyChart days={sampleMonthlyChartDays} />
+
+          <AssetAllocationCard summary={sampleAssetAllocation} />
+
+          <TodayLearningCard topics={sampleLearningTopics} />
+
+          <AiAnalysisCard />
+
+          <View style={styles.shortcutGrid}>
+            <Shortcut label="会計入力" />
+            <Shortcut label="家計簿" />
+            <Shortcut label="投資分析" />
+            <Shortcut label="CSV出力" />
+          </View>
         </View>
-
-        <HomeKpiGrid kpis={sampleHomeKpis} />
-
-        <MonthlyChart days={sampleMonthlyChartDays} />
-
-        <AssetAllocationCard summary={sampleAssetAllocation} />
-
-        <TodayLearningCard topics={sampleLearningTopics} />
-
-        <AiAnalysisCard />
-
-        <View style={styles.shortcutGrid}>
-          <Shortcut label="会計入力" />
-          <Shortcut label="家計簿" />
-          <Shortcut label="投資分析" />
-          <Shortcut label="CSV出力" />
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+      <BottomTabBar />
+    </View>
   );
 }
 
@@ -130,18 +134,25 @@ function getBarColor(status: AiAnalysisDay["status"]) {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    backgroundColor: "#F6F8FC",
+    flex: 1,
+    width: "100%"
+  },
   screen: {
     backgroundColor: "#F6F8FC",
     flex: 1
   },
   content: {
-    paddingBottom: 32,
+    alignItems: "center",
+    paddingBottom: 132,
     paddingHorizontal: 16,
-    paddingTop: 56
+    paddingTop: 50
   },
   contentInner: {
     alignSelf: "center",
     maxWidth: 430,
+    minWidth: 0,
     width: "100%"
   },
   header: {
@@ -149,7 +160,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
-    marginBottom: 18
+    marginBottom: 18,
+    minWidth: 0
+  },
+  headerText: {
+    flex: 1,
+    minWidth: 0
   },
   kicker: {
     color: "#64748B",
@@ -182,14 +198,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 16,
-    padding: 14
+    padding: 16,
+    width: "100%"
   },
   sectionHeader: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
-    marginBottom: 14
+    marginBottom: 14,
+    minWidth: 0
   },
   sectionHint: {
     color: "#64748B",
@@ -206,7 +224,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     flexDirection: "row",
     gap: 3,
-    height: 126
+    height: 126,
+    minWidth: 0,
+    width: "100%"
   },
   barColumn: {
     alignItems: "center",
@@ -263,7 +283,9 @@ const styles = StyleSheet.create({
     minHeight: 52,
     justifyContent: "center",
     padding: 10,
-    width: "48.5%"
+    flexBasis: "48%",
+    flexGrow: 1,
+    minWidth: 0
   },
   shortcutText: {
     color: "#1F2937",

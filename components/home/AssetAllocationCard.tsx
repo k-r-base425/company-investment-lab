@@ -96,7 +96,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 18,
-    elevation: 2
+    elevation: 2,
+    width: "100%"
   },
   header: {
     flexDirection: "row",
@@ -131,12 +132,15 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     borderRadius: 8,
     borderWidth: 1,
+    flexBasis: "48%",
+    flexGrow: 1,
     minHeight: 62,
+    minWidth: 0,
     paddingHorizontal: 10,
-    paddingVertical: 9,
-    width: "48.5%"
+    paddingVertical: 9
   },
   summaryPillWide: {
+    flexBasis: "100%",
     width: "100%"
   },
   summaryLabel: {
@@ -149,7 +153,8 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     fontSize: 17,
     fontWeight: "900",
-    letterSpacing: 0
+    letterSpacing: 0,
+    minWidth: 0
   },
   barWrap: {
     marginTop: 16
@@ -187,7 +192,7 @@ const styles = StyleSheet.create({
     color: "#64748B",
     fontSize: 12,
     fontWeight: "800",
-    minWidth: 86,
+    minWidth: 72,
     textAlign: "right"
   },
   memoBox: {
