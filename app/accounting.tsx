@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { AccountingEntryForm } from "../components/accounting/AccountingEntryForm";
+import { AccountingAnalysisSection } from "../components/accounting/AccountingAnalysisSection";
 import { AccountingSummaryCards } from "../components/accounting/AccountingSummaryCards";
 import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs";
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
@@ -25,6 +26,7 @@ export default function AccountingScreen() {
   const [activeType, setActiveType] = useState<AccountingEntryType>("revenue");
   const [entries, setEntries] = useState<AccountingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFallbackData, setIsFallbackData] = useState(false);
   const [storageError, setStorageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [editingEntry, setEditingEntry] = useState<AccountingEntry | null>(null);
@@ -37,6 +39,7 @@ export default function AccountingScreen() {
     async function initializeStorage() {
       try {
         setIsLoading(true);
+        setIsFallbackData(false);
         setStorageError("");
         await initAccountingStorage();
         await seedAccountingEntriesIfEmpty(sampleAccountingEntries);
@@ -44,11 +47,13 @@ export default function AccountingScreen() {
 
         if (!canceled) {
           setEntries(savedEntries);
+          setIsFallbackData(false);
         }
       } catch {
         if (!canceled) {
           setStorageError("ローカル保存の読み込みに失敗しました。");
           setEntries(sampleAccountingEntries.filter((entry) => entry.date.startsWith(targetMonth)));
+          setIsFallbackData(true);
         }
       } finally {
         if (!canceled) {
@@ -71,6 +76,7 @@ export default function AccountingScreen() {
   const reloadEntries = async () => {
     const savedEntries = await getAccountingEntriesByMonth(targetMonth);
     setEntries(savedEntries);
+    setIsFallbackData(false);
   };
 
   const showMessage = (message: string) => {
@@ -151,6 +157,15 @@ export default function AccountingScreen() {
           </View>
 
           <AccountingSummaryCards summary={monthlySummary} />
+
+          <AccountingAnalysisSection
+            entries={entries}
+            errorMessage={isFallbackData ? storageError : ""}
+            isFallback={isFallbackData}
+            isLoading={isLoading}
+            month={targetMonth}
+            monthLabel="2026年6月"
+          />
 
           {isLoading ? <Text style={styles.statusMessage}>保存済みデータを読み込んでいます...</Text> : null}
 
