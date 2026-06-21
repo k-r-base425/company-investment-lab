@@ -1,10 +1,12 @@
 import { buildAccountingBreakdowns } from "../accounting/buildAccountingBreakdowns";
+import { buildAccountingInsights } from "../accounting/buildAccountingInsights";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import type { AccountingEntry } from "../types/accounting";
 
 export function buildAccountingJson(entries: AccountingEntry[], month: string) {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const breakdowns = buildAccountingBreakdowns(entries, month);
+  const accountingInsights = buildAccountingInsights({ entries, month });
 
   return {
     month,
@@ -16,6 +18,7 @@ export function buildAccountingJson(entries: AccountingEntry[], month: string) {
     },
     judgementBreakdown: breakdowns.judgementBreakdown,
     costBehaviorBreakdown: breakdowns.costBehaviorBreakdown,
+    accountingInsights,
     breakdowns,
     entries: monthlyEntries
   };

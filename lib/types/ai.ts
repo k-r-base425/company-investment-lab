@@ -1,4 +1,5 @@
 import type { AccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import type { AccountingInsight } from "./accountingInsight";
 import type { MonthlyChartDay, MonthlyChartMetric } from "./monthlyChart";
 
 export type AiAnalysisPayload = {
@@ -23,6 +24,7 @@ export type AiAnalysisPayload = {
     }[];
   };
   accountingAnalysis: AccountingAnalysisPayload;
+  accountingInsights: AccountingInsight[];
   investment: {
     totalAssets: number;
     cashRatio: number;

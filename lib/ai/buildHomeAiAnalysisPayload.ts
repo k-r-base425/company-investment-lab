@@ -32,6 +32,7 @@ export function buildHomeAiAnalysisPayload(entries: AccountingEntry[], month: st
       }))
     },
     accountingAnalysis,
+    accountingInsights: accountingAnalysis.accountingInsights,
     monthlyChart: {
       month,
       metric: "profit",

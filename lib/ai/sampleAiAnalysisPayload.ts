@@ -8,6 +8,7 @@ const sampleMonthlyChartData = buildMonthlyChartFromAccountingEntries({
   metric: "profit",
   month: "2026-06"
 });
+const sampleAccountingAnalysis = buildAccountingAnalysisPayload(sampleAccountingEntries, "2026-06");
 
 export const sampleMonthlyChartDays = sampleMonthlyChartData.days;
 
@@ -35,7 +36,8 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
       { name: "交際費", amount: 30000 }
     ]
   },
-  accountingAnalysis: buildAccountingAnalysisPayload(sampleAccountingEntries, "2026-06"),
+  accountingAnalysis: sampleAccountingAnalysis,
+  accountingInsights: sampleAccountingAnalysis.accountingInsights,
   investment: {
     totalAssets: 14850000,
     cashRatio: 0.286,

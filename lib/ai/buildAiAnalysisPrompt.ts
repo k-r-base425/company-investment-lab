@@ -15,6 +15,9 @@ export function buildAiAnalysisPrompt(payload: AiAnalysisPayload) {
 7. 今月見るべき会計・投資指標
 8. 簿記2級の学習と結びつくポイント
 9. 次に取るべき具体的な行動
+10. アプリが生成した改善コメントの妥当性
+11. 経費率・利益率・投資可能額・固定費・浪費・投資支出の改善策
+12. 次に取るべき具体的な行動の優先順位
 
 データ：
 ${JSON.stringify(payload, null, 2)}`;

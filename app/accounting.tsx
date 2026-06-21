@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { AccountingEntryForm } from "../components/accounting/AccountingEntryForm";
 import { AccountingAnalysisSection } from "../components/accounting/AccountingAnalysisSection";
+import { AccountingInsightsSection } from "../components/accounting/AccountingInsightsSection";
 import { AccountingSummaryCards } from "../components/accounting/AccountingSummaryCards";
 import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs";
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
@@ -157,6 +158,15 @@ export default function AccountingScreen() {
           </View>
 
           <AccountingSummaryCards summary={monthlySummary} />
+
+          <AccountingInsightsSection
+            entries={entries}
+            errorMessage={isFallbackData ? storageError : ""}
+            isFallback={isFallbackData}
+            isLoading={isLoading}
+            month={targetMonth}
+            monthLabel="2026年6月"
+          />
 
           <AccountingAnalysisSection
             entries={entries}
