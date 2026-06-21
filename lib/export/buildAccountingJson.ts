@@ -2,6 +2,7 @@ import { buildAccountingBreakdowns } from "../accounting/buildAccountingBreakdow
 import { buildAccountingInsights } from "../accounting/buildAccountingInsights";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
+import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import type { AccountingEntry } from "../types/accounting";
 import type { ImprovementAction } from "../types/improvementAction";
 
@@ -10,6 +11,7 @@ export function buildAccountingJson(entries: AccountingEntry[], month: string, a
   const breakdowns = buildAccountingBreakdowns(entries, month);
   const accountingInsights = buildAccountingInsights({ entries, month });
   const improvementActions = buildImprovementActionsSummary(actions, month);
+  const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
 
   return {
     month,
@@ -23,6 +25,7 @@ export function buildAccountingJson(entries: AccountingEntry[], month: string, a
     costBehaviorBreakdown: breakdowns.costBehaviorBreakdown,
     accountingInsights,
     improvementActions,
+    improvementProgress,
     breakdowns,
     entries: monthlyEntries
   };

@@ -1,13 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import {
-  buildImprovementActionsSummary,
-  getTopTodoImprovementActions
-} from "../../lib/accounting/buildImprovementActionsSummary";
+import { buildImprovementProgressReport } from "../../lib/improvement/buildImprovementProgressReport";
+import type { AccountingEntry } from "../../lib/types/accounting";
 import type { ImprovementAction, ImprovementActionPriority } from "../../lib/types/improvementAction";
 
 type HomeImprovementActionsCardProps = {
   actions: ImprovementAction[];
+  entries: AccountingEntry[];
   errorMessage?: string;
   isLoading: boolean;
   monthLabel: string;
@@ -22,21 +21,27 @@ const priorityLabels: Record<ImprovementActionPriority, string> = {
 
 export function HomeImprovementActionsCard({
   actions,
+  entries,
   errorMessage,
   isLoading,
   monthLabel,
   period
 }: HomeImprovementActionsCardProps) {
-  const summary = buildImprovementActionsSummary(actions, period);
-  const topTodoActions = getTopTodoImprovementActions(actions, period, 3);
-  const completionPercent = Math.round(summary.completionRate * 100);
+  const report = buildImprovementProgressReport({ actions, entries, period });
+  const topTodoActions = [...actions]
+    .filter((action) => action.period === period && action.status === "todo")
+    .sort((first, second) => getPriorityRank(first.priority) - getPriorityRank(second.priority))
+    .slice(0, 3);
+  const completionPercent = Math.round(report.actionSummary.completionRate * 100);
+  const topInsight = report.insights[0];
 
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
           <Text style={styles.eyebrow}>{monthLabel}</Text>
-          <Text style={styles.title}>今月の改善アクション</Text>
+          <Text style={styles.title}>改善進捗</Text>
+          <Text style={styles.subtitle}>改善アクションと会計KPIを一緒に確認</Text>
         </View>
         <View style={styles.rateBadge}>
           <Text style={styles.rateLabel}>達成率</Text>
@@ -45,9 +50,11 @@ export function HomeImprovementActionsCard({
       </View>
 
       <View style={styles.summaryRow}>
-        <SummaryPill label="未完了" value={`${summary.todoCount}件`} tone="todo" />
-        <SummaryPill label="完了" value={`${summary.doneCount}件`} tone="done" />
-        <SummaryPill label="合計" value={`${summary.totalCount}件`} tone="total" />
+        <SummaryPill label="未完了" value={`${report.actionSummary.todoCount}件`} tone="todo" />
+        <SummaryPill label="完了" value={`${report.actionSummary.doneCount}件`} tone="done" />
+        <SummaryPill label="高優先度 未完了" value={`${report.actionSummary.highPriorityTodoCount}件`} tone="total" />
+        <SummaryPill label="投資可能額" value={formatCurrency(report.kpiSnapshot.investableAmount)} tone="total" />
+        <SummaryPill label="経費率" value={formatPercent(report.kpiSnapshot.expenseRatio)} tone="total" />
       </View>
 
       {isLoading ? <Text style={styles.statusText}>改善アクションを読み込み中...</Text> : null}
@@ -71,6 +78,13 @@ export function HomeImprovementActionsCard({
           <Text style={styles.emptySubtext}>会計タブの改善コメントから作成できます。</Text>
         </View>
       )}
+
+      {topInsight ? (
+        <View style={styles.insightBox}>
+          <Text style={styles.insightTitle}>{topInsight.title}</Text>
+          <Text style={styles.insightText}>{topInsight.recommendation}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -94,6 +108,27 @@ function getPriorityDotStyle(priority: ImprovementActionPriority) {
   }
 
   return styles.lowDot;
+}
+
+function getPriorityRank(priority: ImprovementActionPriority) {
+  if (priority === "high") {
+    return 0;
+  }
+
+  if (priority === "medium") {
+    return 1;
+  }
+
+  return 2;
+}
+
+function formatCurrency(value: number) {
+  const absValue = Math.abs(Math.round(value));
+  return `${value < 0 ? "-" : ""}¥${absValue.toLocaleString("ja-JP")}`;
+}
+
+function formatPercent(value: number) {
+  return `${(value * 100).toFixed(1)}%`;
 }
 
 const styles = StyleSheet.create({
@@ -129,6 +164,13 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0
   },
+  subtitle: {
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 17,
+    marginTop: 4
+  },
   rateBadge: {
     alignItems: "flex-end",
     backgroundColor: "#EEF2FF",
@@ -159,6 +201,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     borderRadius: 8,
     flexGrow: 1,
+    minWidth: 118,
     padding: 10
   },
   todoPill: {
@@ -254,5 +297,26 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     lineHeight: 18,
     marginTop: 4
+  },
+  insightBox: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 12,
+    padding: 12
+  },
+  insightTitle: {
+    color: "#1E3A8A",
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 19
+  },
+  insightText: {
+    color: "#334155",
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 18,
+    marginTop: 5
   }
 });

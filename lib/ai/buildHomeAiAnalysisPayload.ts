@@ -1,6 +1,7 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
+import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
@@ -16,6 +17,7 @@ export function buildHomeAiAnalysisPayload(
   const householdCostBreakdown = buildHouseholdCostBreakdown(entries, month);
   const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
   const improvementActions = buildImprovementActionsSummary(actions, month);
+  const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
 
   return {
     ...sampleAiAnalysisPayload,
@@ -41,6 +43,7 @@ export function buildHomeAiAnalysisPayload(
     accountingAnalysis,
     accountingInsights: accountingAnalysis.accountingInsights,
     improvementActions,
+    improvementProgress,
     monthlyChart: {
       month,
       metric: "profit",

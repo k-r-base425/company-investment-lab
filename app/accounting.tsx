@@ -7,6 +7,7 @@ import { AccountingInsightsSection } from "../components/accounting/AccountingIn
 import { AccountingSummaryCards } from "../components/accounting/AccountingSummaryCards";
 import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs";
 import { ImprovementActionsSection } from "../components/accounting/ImprovementActionsSection";
+import { ImprovementProgressSection } from "../components/accounting/ImprovementProgressSection";
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
 import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
@@ -275,6 +276,14 @@ export default function AccountingScreen() {
             onCreateFromInsights={handleCreateImprovementActions}
             onDelete={handleDeleteImprovementAction}
             onToggleStatus={handleToggleImprovementActionStatus}
+            period={targetMonth}
+          />
+
+          <ImprovementProgressSection
+            actions={improvementActions}
+            entries={entries}
+            isLoading={isLoading || isActionLoading}
+            monthLabel="2026年6月"
             period={targetMonth}
           />
 

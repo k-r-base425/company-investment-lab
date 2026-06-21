@@ -124,6 +124,7 @@ export default function HomeScreen() {
 
           <HomeImprovementActionsCard
             actions={improvementActions}
+            entries={accountingEntries}
             errorMessage={actionErrorMessage}
             isLoading={isActionLoading}
             monthLabel={monthLabel}
