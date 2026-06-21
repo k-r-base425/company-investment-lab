@@ -58,3 +58,39 @@ export const createAiAnalysisRunsCreatedAtIndexSql = `
 CREATE INDEX IF NOT EXISTS idx_ai_analysis_runs_created_at
 ON ai_analysis_runs(created_at);
 `;
+
+export const createImprovementActionsTableSql = `
+CREATE TABLE IF NOT EXISTS improvement_actions (
+  id TEXT PRIMARY KEY NOT NULL,
+  period TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  category TEXT NOT NULL,
+  source TEXT NOT NULL,
+  status TEXT NOT NULL,
+  priority TEXT NOT NULL,
+  source_insight_id TEXT,
+  source_insight_title TEXT,
+  source_action_index INTEGER,
+  action_key TEXT,
+  due_date TEXT,
+  completed_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+`;
+
+export const createImprovementActionsPeriodIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_improvement_actions_period
+ON improvement_actions(period);
+`;
+
+export const createImprovementActionsStatusIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_improvement_actions_status
+ON improvement_actions(status);
+`;
+
+export const createImprovementActionsActionKeyIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_improvement_actions_action_key
+ON improvement_actions(action_key);
+`;

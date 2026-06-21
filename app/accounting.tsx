@@ -6,9 +6,12 @@ import { AccountingAnalysisSection } from "../components/accounting/AccountingAn
 import { AccountingInsightsSection } from "../components/accounting/AccountingInsightsSection";
 import { AccountingSummaryCards } from "../components/accounting/AccountingSummaryCards";
 import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs";
+import { ImprovementActionsSection } from "../components/accounting/ImprovementActionsSection";
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
 import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { buildAccountingInsights } from "../lib/accounting/buildAccountingInsights";
+import { buildImprovementActionsFromInsights } from "../lib/accounting/buildImprovementActionsFromInsights";
 import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
 import {
@@ -19,7 +22,15 @@ import {
   seedAccountingEntriesIfEmpty,
   updateAccountingEntry
 } from "../lib/storage/accountingEntryRepository";
+import {
+  deleteImprovementAction,
+  getImprovementActionsByPeriod,
+  initImprovementActionStorage,
+  updateImprovementActionStatus,
+  upsertImprovementActionsByActionKey
+} from "../lib/storage/improvementActionRepository";
 import type { AccountingEntry, AccountingEntryType } from "../lib/types/accounting";
+import type { ImprovementAction } from "../lib/types/improvementAction";
 
 const targetMonth = "2026-06";
 
@@ -31,7 +42,12 @@ export default function AccountingScreen() {
   const [storageError, setStorageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [editingEntry, setEditingEntry] = useState<AccountingEntry | null>(null);
+  const [improvementActions, setImprovementActions] = useState<ImprovementAction[]>([]);
+  const [isActionLoading, setIsActionLoading] = useState(true);
+  const [actionError, setActionError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const monthlySummary = calculateMonthlyAccountingSummary(entries, targetMonth);
 
   useEffect(() => {
@@ -45,6 +61,7 @@ export default function AccountingScreen() {
         await initAccountingStorage();
         await seedAccountingEntriesIfEmpty(sampleAccountingEntries);
         const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+        await loadImprovementActions();
 
         if (!canceled) {
           setEntries(savedEntries);
@@ -55,6 +72,7 @@ export default function AccountingScreen() {
           setStorageError("ローカル保存の読み込みに失敗しました。");
           setEntries(sampleAccountingEntries.filter((entry) => entry.date.startsWith(targetMonth)));
           setIsFallbackData(true);
+          setIsActionLoading(false);
         }
       } finally {
         if (!canceled) {
@@ -71,6 +89,10 @@ export default function AccountingScreen() {
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
       }
+
+      if (actionTimerRef.current) {
+        clearTimeout(actionTimerRef.current);
+      }
     };
   }, []);
 
@@ -78,6 +100,21 @@ export default function AccountingScreen() {
     const savedEntries = await getAccountingEntriesByMonth(targetMonth);
     setEntries(savedEntries);
     setIsFallbackData(false);
+  };
+
+  const loadImprovementActions = async () => {
+    try {
+      setIsActionLoading(true);
+      setActionError("");
+      await initImprovementActionStorage();
+      const savedActions = await getImprovementActionsByPeriod(targetMonth);
+      setImprovementActions(savedActions);
+    } catch {
+      setActionError("改善アクションの読み込みに失敗しました。");
+      setImprovementActions([]);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const showMessage = (message: string) => {
@@ -89,6 +126,18 @@ export default function AccountingScreen() {
     successTimerRef.current = setTimeout(() => {
       setSuccessMessage("");
       successTimerRef.current = null;
+    }, 2500);
+  };
+
+  const showActionMessage = (message: string) => {
+    setActionMessage(message);
+    if (actionTimerRef.current) {
+      clearTimeout(actionTimerRef.current);
+    }
+
+    actionTimerRef.current = setTimeout(() => {
+      setActionMessage("");
+      actionTimerRef.current = null;
     }, 2500);
   };
 
@@ -144,6 +193,54 @@ export default function AccountingScreen() {
     setEditingEntry(null);
   };
 
+  const handleCreateImprovementActions = async () => {
+    try {
+      setActionError("");
+      const insights = buildAccountingInsights({ entries, month: targetMonth });
+      const actions = buildImprovementActionsFromInsights({ insights, period: targetMonth });
+      const result = await upsertImprovementActionsByActionKey(actions);
+      await loadImprovementActions();
+
+      if (result.insertedCount === 0 && result.skippedCount === 0) {
+        showActionMessage("作成できる改善アクションがありません");
+        return;
+      }
+
+      showActionMessage(
+        result.skippedCount > 0
+          ? `${result.insertedCount}件作成、${result.skippedCount}件は保存済みでした`
+          : `改善アクションを${result.insertedCount}件作成しました`
+      );
+    } catch {
+      setActionError("改善アクションの作成に失敗しました。");
+    }
+  };
+
+  const handleToggleImprovementActionStatus = async (action: ImprovementAction) => {
+    try {
+      setActionError("");
+      await updateImprovementActionStatus({
+        id: action.id,
+        status: action.status === "done" ? "todo" : "done"
+      });
+      await loadImprovementActions();
+      showActionMessage(action.status === "done" ? "未完了に戻しました" : "完了にしました");
+    } catch {
+      setActionError("改善アクションの更新に失敗しました。");
+    }
+  };
+
+  const handleDeleteImprovementAction = async (id: string) => {
+    try {
+      setActionError("");
+      await deleteImprovementAction(id);
+      await loadImprovementActions();
+      showActionMessage("改善アクションを削除しました");
+    } catch {
+      setActionError("改善アクションの削除に失敗しました。");
+    }
+  };
+
   return (
     <View style={styles.root}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -166,6 +263,19 @@ export default function AccountingScreen() {
             isLoading={isLoading}
             month={targetMonth}
             monthLabel="2026年6月"
+          />
+
+          <ImprovementActionsSection
+            actionMessage={actionMessage}
+            actions={improvementActions}
+            errorMessage={actionError}
+            isFallback={isFallbackData}
+            isLoading={isActionLoading}
+            monthLabel="2026年6月"
+            onCreateFromInsights={handleCreateImprovementActions}
+            onDelete={handleDeleteImprovementAction}
+            onToggleStatus={handleToggleImprovementActionStatus}
+            period={targetMonth}
           />
 
           <AccountingAnalysisSection

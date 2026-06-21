@@ -1,4 +1,5 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { sampleAccountingEntries } from "../accounting/sampleAccountingEntries";
 import type { AiAnalysisPayload } from "../types/ai";
@@ -9,6 +10,7 @@ const sampleMonthlyChartData = buildMonthlyChartFromAccountingEntries({
   month: "2026-06"
 });
 const sampleAccountingAnalysis = buildAccountingAnalysisPayload(sampleAccountingEntries, "2026-06");
+const sampleImprovementActions = buildImprovementActionsSummary([], "2026-06");
 
 export const sampleMonthlyChartDays = sampleMonthlyChartData.days;
 
@@ -38,6 +40,7 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
   },
   accountingAnalysis: sampleAccountingAnalysis,
   accountingInsights: sampleAccountingAnalysis.accountingInsights,
+  improvementActions: sampleImprovementActions,
   investment: {
     totalAssets: 14850000,
     cashRatio: 0.286,

@@ -5,6 +5,7 @@ import { useFocusEffect } from "expo-router";
 import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
 import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
 import { HomeDataStatus } from "../components/home/HomeDataStatus";
+import { HomeImprovementActionsCard } from "../components/home/HomeImprovementActionsCard";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
 import { HomeMonthlyChartCard } from "../components/home/HomeMonthlyChartCard";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
@@ -14,7 +15,9 @@ import { buildHomeKpisFromAccounting } from "../lib/home/buildHomeKpisFromAccoun
 import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
 import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../lib/storage/accountingEntryRepository";
+import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../lib/storage/improvementActionRepository";
 import type { AccountingEntry } from "../lib/types/accounting";
+import type { ImprovementAction } from "../lib/types/improvementAction";
 
 const targetMonth = "2026-06";
 const monthLabel = "2026年6月";
@@ -26,6 +29,9 @@ export default function HomeScreen() {
   const [isFallback, setIsFallback] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [improvementActions, setImprovementActions] = useState<ImprovementAction[]>([]);
+  const [isActionLoading, setIsActionLoading] = useState(true);
+  const [actionErrorMessage, setActionErrorMessage] = useState("");
   const kpis = useMemo(
     () => buildHomeKpisFromAccounting({ entries: accountingEntries, month: targetMonth }),
     [accountingEntries]
@@ -58,10 +64,26 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const loadImprovementActions = useCallback(async () => {
+    try {
+      setIsActionLoading(true);
+      setActionErrorMessage("");
+      await initImprovementActionStorage();
+      const savedActions = await getImprovementActionsByPeriod(targetMonth);
+      setImprovementActions(savedActions);
+    } catch {
+      setImprovementActions([]);
+      setActionErrorMessage("改善アクションの読み込みに失敗しました。");
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadAccountingEntries();
-    }, [loadAccountingEntries])
+      loadImprovementActions();
+    }, [loadAccountingEntries, loadImprovementActions])
   );
 
   return (
@@ -99,6 +121,14 @@ export default function HomeScreen() {
           <AssetAllocationCard summary={sampleAssetAllocation} />
 
           <TodayLearningCard topics={sampleLearningTopics} />
+
+          <HomeImprovementActionsCard
+            actions={improvementActions}
+            errorMessage={actionErrorMessage}
+            isLoading={isActionLoading}
+            monthLabel={monthLabel}
+            period={targetMonth}
+          />
 
           <AiAnalysisCard />
 

@@ -1,14 +1,21 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
+import type { ImprovementAction } from "../types/improvementAction";
 
-export function buildHomeAiAnalysisPayload(entries: AccountingEntry[], month: string): AiAnalysisPayload {
+export function buildHomeAiAnalysisPayload(
+  entries: AccountingEntry[],
+  month: string,
+  actions: ImprovementAction[] = []
+): AiAnalysisPayload {
   const accountingAnalysis = buildAccountingAnalysisPayload(entries, month);
   const { summary, categoryBreakdown } = accountingAnalysis;
   const householdCostBreakdown = buildHouseholdCostBreakdown(entries, month);
   const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
+  const improvementActions = buildImprovementActionsSummary(actions, month);
 
   return {
     ...sampleAiAnalysisPayload,
@@ -33,6 +40,7 @@ export function buildHomeAiAnalysisPayload(entries: AccountingEntry[], month: st
     },
     accountingAnalysis,
     accountingInsights: accountingAnalysis.accountingInsights,
+    improvementActions,
     monthlyChart: {
       month,
       metric: "profit",

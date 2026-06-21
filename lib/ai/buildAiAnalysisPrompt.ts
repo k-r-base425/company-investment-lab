@@ -18,6 +18,9 @@ export function buildAiAnalysisPrompt(payload: AiAnalysisPayload) {
 10. アプリが生成した改善コメントの妥当性
 11. 経費率・利益率・投資可能額・固定費・浪費・投資支出の改善策
 12. 次に取るべき具体的な行動の優先順位
+13. 改善アクションの未完了項目の優先順位
+14. 完了済みアクションが数字に与えた可能性のある影響
+15. 次に完了すべき改善アクション3件
 
 データ：
 ${JSON.stringify(payload, null, 2)}`;

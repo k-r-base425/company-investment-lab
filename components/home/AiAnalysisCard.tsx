@@ -8,6 +8,8 @@ import { createAiAnalysisRun } from "../../lib/ai/createAiAnalysisRun";
 import { sampleAccountingEntries } from "../../lib/accounting/sampleAccountingEntries";
 import { initAiAnalysisRunStorage, insertAiAnalysisRun } from "../../lib/storage/aiAnalysisRunRepository";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
+import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../../lib/storage/improvementActionRepository";
+import type { ImprovementAction } from "../../lib/types/improvementAction";
 
 type CopyStatus = "idle" | "success" | "historyError" | "error";
 
@@ -42,7 +44,16 @@ export function AiAnalysisCard() {
       await initAccountingStorage();
       const savedEntries = await getAccountingEntriesByMonth(targetMonth);
       const entries = savedEntries.length > 0 ? savedEntries : sampleAccountingEntries;
-      const payload = buildHomeAiAnalysisPayload(entries, targetMonth);
+      let improvementActions: ImprovementAction[] = [];
+
+      try {
+        await initImprovementActionStorage();
+        improvementActions = await getImprovementActionsByPeriod(targetMonth);
+      } catch {
+        improvementActions = [];
+      }
+
+      const payload = buildHomeAiAnalysisPayload(entries, targetMonth, improvementActions);
       const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);
       setAccountingEntryCount(entries.length);
