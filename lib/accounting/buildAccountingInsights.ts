@@ -2,15 +2,22 @@ import { buildAccountingBreakdowns } from "./buildAccountingBreakdowns";
 import { calculateMonthlyAccountingSummary } from "./calculateAccountingSummary";
 import type { AccountingEntry } from "../types/accounting";
 import type { AccountingInsight, AccountingInsightSeverity } from "../types/accountingInsight";
+import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 
 type BuildAccountingInsightsParams = {
   entries: AccountingEntry[];
   month: string;
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary;
   monthlyComparison?: MonthlyComparisonSummary;
 };
 
-export function buildAccountingInsights({ entries, month, monthlyComparison }: BuildAccountingInsightsParams): AccountingInsight[] {
+export function buildAccountingInsights({
+  categoryMonthlyComparison,
+  entries,
+  month,
+  monthlyComparison
+}: BuildAccountingInsightsParams): AccountingInsight[] {
   const summary = calculateMonthlyAccountingSummary(entries, month);
   const breakdowns = buildAccountingBreakdowns(entries, month);
   const insights: AccountingInsight[] = [];
@@ -133,6 +140,7 @@ export function buildAccountingInsights({ entries, month, monthlyComparison }: B
   }
 
   insights.push(...buildMonthlyComparisonInsights(monthlyComparison));
+  insights.push(...buildCategoryMonthlyComparisonInsights(categoryMonthlyComparison));
 
   return sortInsightsByPriority(insights);
 }
@@ -213,6 +221,66 @@ function buildMonthlyComparisonInsights(monthlyComparison?: MonthlyComparisonSum
         { label: "現在値", value: investableAmount.displayValue }
       ],
       priority: 19
+    });
+  }
+
+  return insights;
+}
+
+function buildCategoryMonthlyComparisonInsights(
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary
+): AccountingInsight[] {
+  if (!categoryMonthlyComparison?.hasPreviousData) {
+    return [];
+  }
+
+  const insights: AccountingInsight[] = [];
+  const topIncreasedExpense = categoryMonthlyComparison.increasedExpenseCategories[0];
+  const topIncreasedHousehold = categoryMonthlyComparison.increasedHouseholdCategories[0];
+
+  if (topIncreasedExpense) {
+    insights.push({
+      id: "category-monthly-comparison-expense-increase",
+      category: "expense",
+      severity: "warning",
+      title: "増えている経費カテゴリがあります",
+      message: "前月より増えている経費カテゴリがあります。継続的な支出か一時的な支出かを確認しましょう。",
+      metricLabel: "最大増加カテゴリ",
+      metricValue: topIncreasedExpense.category,
+      recommendation: "増加したカテゴリを上から確認し、来月も続く支出かを分けて見ましょう。",
+      actionItems: [
+        "増加した経費カテゴリの上位を確認する",
+        "来月も続く支出か確認する",
+        "固定費に変わっていないか確認する"
+      ],
+      relatedData: [
+        { label: "前月差", value: topIncreasedExpense.displayDifference },
+        { label: "前月比", value: topIncreasedExpense.displayPercentageChange }
+      ],
+      priority: 75
+    });
+  }
+
+  if (topIncreasedHousehold) {
+    insights.push({
+      id: "category-monthly-comparison-household-increase",
+      category: "household",
+      severity: "warning",
+      title: "増えている家計カテゴリがあります",
+      message: "前月より増えている家計支出があります。投資可能額への影響を確認しましょう。",
+      metricLabel: "最大増加カテゴリ",
+      metricValue: topIncreasedHousehold.category,
+      recommendation: "必要支出か浪費かを分け、来月減らせる支出候補を1つ選びましょう。",
+      actionItems: [
+        "増加した家計カテゴリの上位を確認する",
+        "必要支出か浪費かを分類する",
+        "来月減らせる支出を1つ選ぶ"
+      ],
+      relatedData: [
+        { label: "前月差", value: topIncreasedHousehold.displayDifference },
+        { label: "前月比", value: topIncreasedHousehold.displayPercentageChange }
+      ],
+      priority: 74
     });
   }
 

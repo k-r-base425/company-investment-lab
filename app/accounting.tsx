@@ -7,6 +7,7 @@ import { AccountingAnalysisSection } from "../components/accounting/AccountingAn
 import { AccountingInsightsSection } from "../components/accounting/AccountingInsightsSection";
 import { AccountingSummaryCards } from "../components/accounting/AccountingSummaryCards";
 import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs";
+import { CategoryMonthlyComparisonSection } from "../components/accounting/CategoryMonthlyComparisonSection";
 import { ImprovementActionsSection } from "../components/accounting/ImprovementActionsSection";
 import { ImprovementProgressSection } from "../components/accounting/ImprovementProgressSection";
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
@@ -15,6 +16,7 @@ import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import { buildAccountingInsights } from "../lib/accounting/buildAccountingInsights";
+import { buildCategoryMonthlyComparison } from "../lib/accounting/buildCategoryMonthlyComparison";
 import { buildMonthlyComparisonSummary } from "../lib/accounting/buildMonthlyComparisonSummary";
 import { buildImprovementActionsFromInsights } from "../lib/accounting/buildImprovementActionsFromInsights";
 import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
@@ -64,6 +66,12 @@ export default function AccountingScreen() {
     currentSummary: monthlySummary,
     previousMonth,
     previousSummary: previousMonthlySummary
+  });
+  const categoryMonthlyComparison = buildCategoryMonthlyComparison({
+    currentEntries: entries,
+    currentMonth: selectedMonth,
+    previousEntries,
+    previousMonth
   });
   const defaultEntryDate = `${selectedMonth}-05`;
 
@@ -222,7 +230,12 @@ export default function AccountingScreen() {
   const handleCreateImprovementActions = async () => {
     try {
       setActionError("");
-      const insights = buildAccountingInsights({ entries, month: selectedMonth, monthlyComparison });
+      const insights = buildAccountingInsights({
+        categoryMonthlyComparison,
+        entries,
+        month: selectedMonth,
+        monthlyComparison
+      });
       const actions = buildImprovementActionsFromInsights({ insights, period: selectedMonth });
       const result = await upsertImprovementActionsByActionKey(actions);
       await loadImprovementActions();
@@ -290,6 +303,15 @@ export default function AccountingScreen() {
             previousMonthLabel={previousMonthLabel}
           />
 
+          <CategoryMonthlyComparisonSection
+            comparison={categoryMonthlyComparison}
+            currentMonthLabel={selectedMonthLabel}
+            errorMessage={isFallbackData ? storageError : ""}
+            isFallback={isFallbackData}
+            isLoading={isLoading}
+            previousMonthLabel={previousMonthLabel}
+          />
+
           <AccountingInsightsSection
             entries={entries}
             errorMessage={isFallbackData ? storageError : ""}
@@ -297,6 +319,7 @@ export default function AccountingScreen() {
             isLoading={isLoading}
             month={selectedMonth}
             monthLabel={selectedMonthLabel}
+            categoryMonthlyComparison={categoryMonthlyComparison}
             monthlyComparison={monthlyComparison}
           />
 

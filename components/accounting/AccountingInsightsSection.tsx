@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { buildAccountingInsights } from "../../lib/accounting/buildAccountingInsights";
 import type { AccountingEntry } from "../../lib/types/accounting";
+import type { CategoryMonthlyComparisonSummary } from "../../lib/types/categoryMonthlyComparison";
 import type { MonthlyComparisonSummary } from "../../lib/types/monthlyComparison";
 import { AccountingInsightCard } from "./AccountingInsightCard";
 
@@ -13,6 +14,7 @@ type AccountingInsightsSectionProps = {
   isLoading: boolean;
   month: string;
   monthLabel: string;
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary;
   monthlyComparison?: MonthlyComparisonSummary;
 };
 
@@ -23,11 +25,12 @@ export function AccountingInsightsSection({
   isLoading,
   month,
   monthLabel,
+  categoryMonthlyComparison,
   monthlyComparison
 }: AccountingInsightsSectionProps) {
   const insights = useMemo(
-    () => buildAccountingInsights({ entries, month, monthlyComparison }),
-    [entries, month, monthlyComparison]
+    () => buildAccountingInsights({ categoryMonthlyComparison, entries, month, monthlyComparison }),
+    [categoryMonthlyComparison, entries, month, monthlyComparison]
   );
 
   return (

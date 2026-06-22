@@ -1,6 +1,7 @@
 import type { AccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
 import type { ImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import type { AccountingInsight } from "./accountingInsight";
+import type { CategoryMonthlyComparisonSummary } from "./categoryMonthlyComparison";
 import type { ImprovementProgressReport } from "./improvementProgress";
 import type { MonthlyComparisonSummary } from "./monthlyComparison";
 import type { MonthlyChartDay, MonthlyChartMetric } from "./monthlyChart";
@@ -28,6 +29,7 @@ export type AiAnalysisPayload = {
   };
   accountingAnalysis: AccountingAnalysisPayload;
   accountingInsights: AccountingInsight[];
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary;
   monthlyComparison?: MonthlyComparisonSummary;
   improvementActions: ImprovementActionsSummary;
   improvementProgress: ImprovementProgressReport;

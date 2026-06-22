@@ -4,6 +4,7 @@ import { buildAccountingBreakdowns } from "./buildAccountingBreakdowns";
 import type { AccountingEntry, MonthlyAccountingSummary } from "../types/accounting";
 import type { CategoryBreakdownItem, CostBehaviorBreakdown, JudgementBreakdown } from "../types/accountingAnalysis";
 import type { AccountingInsight } from "../types/accountingInsight";
+import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 
 export type AccountingAnalysisPayload = {
@@ -23,12 +24,18 @@ export type AccountingAnalysisPayload = {
 export function buildAccountingAnalysisPayload(
   entries: AccountingEntry[],
   month: string,
-  monthlyComparison?: MonthlyComparisonSummary
+  monthlyComparison?: MonthlyComparisonSummary,
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary
 ): AccountingAnalysisPayload {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const summary = calculateMonthlyAccountingSummary(entries, month);
   const breakdowns = buildAccountingBreakdowns(entries, month);
-  const accountingInsights = buildAccountingInsights({ entries, month, monthlyComparison });
+  const accountingInsights = buildAccountingInsights({
+    categoryMonthlyComparison,
+    entries,
+    month,
+    monthlyComparison
+  });
 
   return {
     month,

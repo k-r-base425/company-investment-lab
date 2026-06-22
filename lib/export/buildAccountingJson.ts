@@ -1,11 +1,13 @@
 import { buildAccountingBreakdowns } from "../accounting/buildAccountingBreakdowns";
 import { buildAccountingInsights } from "../accounting/buildAccountingInsights";
+import { buildCategoryMonthlyComparison } from "../accounting/buildCategoryMonthlyComparison";
 import { buildMonthlyComparisonSummary } from "../accounting/buildMonthlyComparisonSummary";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import { getPreviousMonth } from "../month/monthUtils";
 import type { AccountingEntry } from "../types/accounting";
+import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 
@@ -13,7 +15,8 @@ export function buildAccountingJson(
   entries: AccountingEntry[],
   month: string,
   actions: ImprovementAction[] = [],
-  monthlyComparison?: MonthlyComparisonSummary
+  monthlyComparison?: MonthlyComparisonSummary,
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary
 ) {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const breakdowns = buildAccountingBreakdowns(entries, month);
@@ -26,7 +29,20 @@ export function buildAccountingJson(
       previousMonth: getPreviousMonth(month),
       previousSummary: null
     });
-  const accountingInsights = buildAccountingInsights({ entries, month, monthlyComparison: comparison });
+  const categoryComparison =
+    categoryMonthlyComparison ??
+    buildCategoryMonthlyComparison({
+      currentEntries: entries,
+      currentMonth: month,
+      previousEntries: [],
+      previousMonth: getPreviousMonth(month)
+    });
+  const accountingInsights = buildAccountingInsights({
+    categoryMonthlyComparison: categoryComparison,
+    entries,
+    month,
+    monthlyComparison: comparison
+  });
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
 
@@ -41,6 +57,7 @@ export function buildAccountingJson(
     judgementBreakdown: breakdowns.judgementBreakdown,
     costBehaviorBreakdown: breakdowns.costBehaviorBreakdown,
     accountingInsights,
+    categoryMonthlyComparison: categoryComparison,
     monthlyComparison: comparison,
     improvementActions,
     improvementProgress,

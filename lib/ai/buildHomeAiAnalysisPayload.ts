@@ -1,4 +1,5 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { buildCategoryMonthlyComparison } from "../accounting/buildCategoryMonthlyComparison";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { buildMonthlyComparisonSummary } from "../accounting/buildMonthlyComparisonSummary";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
@@ -8,6 +9,7 @@ import { getPreviousMonth } from "../month/monthUtils";
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
+import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 
@@ -15,17 +17,27 @@ export function buildHomeAiAnalysisPayload(
   entries: AccountingEntry[],
   month: string,
   actions: ImprovementAction[] = [],
-  monthlyComparison?: MonthlyComparisonSummary
+  monthlyComparison?: MonthlyComparisonSummary,
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary
 ): AiAnalysisPayload {
+  const previousMonth = getPreviousMonth(month);
   const comparison =
     monthlyComparison ??
     buildMonthlyComparisonSummary({
       currentMonth: month,
       currentSummary: calculateMonthlyAccountingSummary(entries, month),
-      previousMonth: getPreviousMonth(month),
+      previousMonth,
       previousSummary: null
     });
-  const accountingAnalysis = buildAccountingAnalysisPayload(entries, month, comparison);
+  const categoryComparison =
+    categoryMonthlyComparison ??
+    buildCategoryMonthlyComparison({
+      currentEntries: entries,
+      currentMonth: month,
+      previousEntries: [],
+      previousMonth
+    });
+  const accountingAnalysis = buildAccountingAnalysisPayload(entries, month, comparison, categoryComparison);
   const { summary, categoryBreakdown } = accountingAnalysis;
   const householdCostBreakdown = buildHouseholdCostBreakdown(entries, month);
   const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
@@ -55,6 +67,7 @@ export function buildHomeAiAnalysisPayload(
     },
     accountingAnalysis,
     accountingInsights: accountingAnalysis.accountingInsights,
+    categoryMonthlyComparison: categoryComparison,
     monthlyComparison: comparison,
     improvementActions,
     improvementProgress,
