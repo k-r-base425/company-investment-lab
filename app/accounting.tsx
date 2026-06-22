@@ -12,16 +12,23 @@ import { ImprovementActionsSection } from "../components/accounting/ImprovementA
 import { ImprovementProgressSection } from "../components/accounting/ImprovementProgressSection";
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
 import { MonthlyComparisonCard } from "../components/accounting/MonthlyComparisonCard";
+import { MonthlyTrendSection } from "../components/accounting/MonthlyTrendSection";
 import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import { buildAccountingInsights } from "../lib/accounting/buildAccountingInsights";
 import { buildCategoryMonthlyComparison } from "../lib/accounting/buildCategoryMonthlyComparison";
 import { buildMonthlyComparisonSummary } from "../lib/accounting/buildMonthlyComparisonSummary";
+import { buildMonthlyTrendReport } from "../lib/accounting/buildMonthlyTrendReport";
 import { buildImprovementActionsFromInsights } from "../lib/accounting/buildImprovementActionsFromInsights";
 import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
-import { defaultSelectedMonth, formatYearMonthLabel, getPreviousMonth } from "../lib/month/monthUtils";
+import {
+  defaultSelectedMonth,
+  formatYearMonthLabel,
+  getPreviousMonth,
+  getPreviousMonthsIncludingSelected
+} from "../lib/month/monthUtils";
 import {
   deleteAccountingEntry,
   getAccountingEntriesByMonth,
@@ -45,6 +52,7 @@ export default function AccountingScreen() {
   const [activeType, setActiveType] = useState<AccountingEntryType>("revenue");
   const [entries, setEntries] = useState<AccountingEntry[]>([]);
   const [previousEntries, setPreviousEntries] = useState<AccountingEntry[]>([]);
+  const [monthlyTrendEntriesByMonth, setMonthlyTrendEntriesByMonth] = useState<Record<string, AccountingEntry[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isFallbackData, setIsFallbackData] = useState(false);
   const [storageError, setStorageError] = useState("");
@@ -54,10 +62,12 @@ export default function AccountingScreen() {
   const [isActionLoading, setIsActionLoading] = useState(true);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [monthlyTrendError, setMonthlyTrendError] = useState("");
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousMonth = getPreviousMonth(selectedMonth);
   const previousMonthLabel = formatYearMonthLabel(previousMonth);
+  const monthlyTrendMonths = getPreviousMonthsIncludingSelected(selectedMonth, 6);
   const monthlySummary = calculateMonthlyAccountingSummary(entries, selectedMonth);
   const previousMonthlySummary =
     previousEntries.length > 0 ? calculateMonthlyAccountingSummary(previousEntries, previousMonth) : null;
@@ -73,6 +83,14 @@ export default function AccountingScreen() {
     previousEntries,
     previousMonth
   });
+  const monthlyTrendReport = buildMonthlyTrendReport({
+    entriesByMonth: {
+      ...monthlyTrendEntriesByMonth,
+      [selectedMonth]: entries
+    },
+    months: monthlyTrendMonths,
+    selectedMonth
+  });
   const defaultEntryDate = `${selectedMonth}-05`;
 
   useEffect(() => {
@@ -87,6 +105,7 @@ export default function AccountingScreen() {
         await seedAccountingEntriesIfEmpty(sampleAccountingEntries);
         const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
         const savedPreviousEntries = await getAccountingEntriesByMonth(previousMonth);
+        await loadMonthlyTrendEntries();
         await loadImprovementActions();
 
         if (!canceled) {
@@ -103,6 +122,11 @@ export default function AccountingScreen() {
               : []
           );
           setPreviousEntries([]);
+          setMonthlyTrendEntriesByMonth(
+            selectedMonth === defaultSelectedMonth
+              ? { [selectedMonth]: sampleAccountingEntries.filter((entry) => entry.date.startsWith(selectedMonth)) }
+              : {}
+          );
           setIsFallbackData(selectedMonth === defaultSelectedMonth);
           setIsActionLoading(false);
         }
@@ -133,7 +157,27 @@ export default function AccountingScreen() {
     const savedPreviousEntries = await getAccountingEntriesByMonth(previousMonth);
     setEntries(savedEntries);
     setPreviousEntries(savedPreviousEntries);
+    await loadMonthlyTrendEntries();
     setIsFallbackData(false);
+  };
+
+  const loadMonthlyTrendEntries = async () => {
+    const entriesByMonth: Record<string, AccountingEntry[]> = {};
+    let hasError = false;
+
+    await Promise.all(
+      monthlyTrendMonths.map(async (month) => {
+        try {
+          entriesByMonth[month] = await getAccountingEntriesByMonth(month);
+        } catch {
+          entriesByMonth[month] = [];
+          hasError = true;
+        }
+      })
+    );
+
+    setMonthlyTrendEntriesByMonth(entriesByMonth);
+    setMonthlyTrendError(hasError ? "一部の月比較データを読み込めませんでした。該当月は空データとして表示しています。" : "");
   };
 
   const loadImprovementActions = async () => {
@@ -302,6 +346,8 @@ export default function AccountingScreen() {
             currentMonthLabel={selectedMonthLabel}
             previousMonthLabel={previousMonthLabel}
           />
+
+          <MonthlyTrendSection errorMessage={monthlyTrendError} report={monthlyTrendReport} />
 
           <CategoryMonthlyComparisonSection
             comparison={categoryMonthlyComparison}

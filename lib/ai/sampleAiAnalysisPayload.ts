@@ -1,5 +1,6 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
+import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import { sampleAccountingEntries } from "../accounting/sampleAccountingEntries";
@@ -16,6 +17,11 @@ const sampleImprovementProgress = buildImprovementProgressReport({
   actions: [],
   entries: sampleAccountingEntries,
   period: "2026-06"
+});
+const sampleMonthlyTrendReport = buildMonthlyTrendReport({
+  entriesByMonth: { "2026-06": sampleAccountingEntries },
+  months: ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+  selectedMonth: "2026-06"
 });
 
 export const sampleMonthlyChartDays = sampleMonthlyChartData.days;
@@ -48,6 +54,7 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
   accountingInsights: sampleAccountingAnalysis.accountingInsights,
   improvementActions: sampleImprovementActions,
   improvementProgress: sampleImprovementProgress,
+  monthlyTrendReport: sampleMonthlyTrendReport,
   investment: {
     totalAssets: 14850000,
     cashRatio: 0.286,

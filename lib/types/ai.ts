@@ -5,6 +5,7 @@ import type { CategoryMonthlyComparisonSummary } from "./categoryMonthlyComparis
 import type { ImprovementProgressReport } from "./improvementProgress";
 import type { MonthlyComparisonSummary } from "./monthlyComparison";
 import type { MonthlyChartDay, MonthlyChartMetric } from "./monthlyChart";
+import type { MonthlyTrendReport } from "./monthlyTrendReport";
 
 export type AiAnalysisPayload = {
   period: string;
@@ -33,6 +34,7 @@ export type AiAnalysisPayload = {
   monthlyComparison?: MonthlyComparisonSummary;
   improvementActions: ImprovementActionsSummary;
   improvementProgress: ImprovementProgressReport;
+  monthlyTrendReport?: MonthlyTrendReport;
   investment: {
     totalAssets: number;
     cashRatio: number;

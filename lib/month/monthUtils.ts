@@ -22,6 +22,19 @@ export function getNextMonth(month: YearMonth): YearMonth {
   return formatYearMonth(date.getFullYear(), date.getMonth() + 1);
 }
 
+export function getPreviousMonthsIncludingSelected(month: YearMonth, count: number): YearMonth[] {
+  const normalized = normalizeYearMonth(month) ?? defaultSelectedMonth;
+  const safeCount = Math.max(1, Math.floor(count));
+  const [yearText, monthText] = normalized.split("-");
+  const selectedDate = new Date(Number(yearText), Number(monthText) - 1, 1);
+
+  return Array.from({ length: safeCount }, (_, index) => {
+    const monthOffset = safeCount - 1 - index;
+    const date = new Date(selectedDate.getFullYear(), selectedDate.getMonth() - monthOffset, 1);
+    return formatYearMonth(date.getFullYear(), date.getMonth() + 1);
+  });
+}
+
 export function getMonthDateRange(month: YearMonth) {
   const normalized = normalizeYearMonth(month) ?? defaultSelectedMonth;
   const [yearText, monthText] = normalized.split("-");

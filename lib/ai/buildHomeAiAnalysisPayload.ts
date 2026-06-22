@@ -2,23 +2,26 @@ import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAna
 import { buildCategoryMonthlyComparison } from "../accounting/buildCategoryMonthlyComparison";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { buildMonthlyComparisonSummary } from "../accounting/buildMonthlyComparisonSummary";
+import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
-import { getPreviousMonth } from "../month/monthUtils";
+import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
+import type { MonthlyTrendReport } from "../types/monthlyTrendReport";
 
 export function buildHomeAiAnalysisPayload(
   entries: AccountingEntry[],
   month: string,
   actions: ImprovementAction[] = [],
   monthlyComparison?: MonthlyComparisonSummary,
-  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary,
+  monthlyTrendReport?: MonthlyTrendReport
 ): AiAnalysisPayload {
   const previousMonth = getPreviousMonth(month);
   const comparison =
@@ -43,6 +46,13 @@ export function buildHomeAiAnalysisPayload(
   const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
+  const trendReport =
+    monthlyTrendReport ??
+    buildMonthlyTrendReport({
+      entriesByMonth: { [month]: entries },
+      months: getPreviousMonthsIncludingSelected(month, 6),
+      selectedMonth: month
+    });
 
   return {
     ...sampleAiAnalysisPayload,
@@ -71,6 +81,7 @@ export function buildHomeAiAnalysisPayload(
     monthlyComparison: comparison,
     improvementActions,
     improvementProgress,
+    monthlyTrendReport: trendReport,
     monthlyChart: {
       month,
       metric: "profit",

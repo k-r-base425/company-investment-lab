@@ -2,21 +2,24 @@ import { buildAccountingBreakdowns } from "../accounting/buildAccountingBreakdow
 import { buildAccountingInsights } from "../accounting/buildAccountingInsights";
 import { buildCategoryMonthlyComparison } from "../accounting/buildCategoryMonthlyComparison";
 import { buildMonthlyComparisonSummary } from "../accounting/buildMonthlyComparisonSummary";
+import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
-import { getPreviousMonth } from "../month/monthUtils";
+import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
 import type { AccountingEntry } from "../types/accounting";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
+import type { MonthlyTrendReport } from "../types/monthlyTrendReport";
 
 export function buildAccountingJson(
   entries: AccountingEntry[],
   month: string,
   actions: ImprovementAction[] = [],
   monthlyComparison?: MonthlyComparisonSummary,
-  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary
+  categoryMonthlyComparison?: CategoryMonthlyComparisonSummary,
+  monthlyTrendReport?: MonthlyTrendReport
 ) {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const breakdowns = buildAccountingBreakdowns(entries, month);
@@ -45,6 +48,13 @@ export function buildAccountingJson(
   });
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
+  const trendReport =
+    monthlyTrendReport ??
+    buildMonthlyTrendReport({
+      entriesByMonth: { [month]: entries },
+      months: getPreviousMonthsIncludingSelected(month, 6),
+      selectedMonth: month
+    });
 
   return {
     month,
@@ -61,6 +71,7 @@ export function buildAccountingJson(
     monthlyComparison: comparison,
     improvementActions,
     improvementProgress,
+    monthlyTrendReport: trendReport,
     breakdowns,
     entries: monthlyEntries
   };
