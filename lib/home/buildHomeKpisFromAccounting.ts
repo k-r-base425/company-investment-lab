@@ -1,14 +1,21 @@
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
+import { findMonthlyComparisonMetric } from "../accounting/buildMonthlyComparisonSummary";
 import { sampleHomeKpis } from "./sampleHomeSummary";
 import type { AccountingEntry } from "../types/accounting";
-import type { HomeKpi } from "../types/home";
+import type { HomeKpi, KpiTrend } from "../types/home";
+import type { MonthlyComparisonMetricKey, MonthlyComparisonSummary } from "../types/monthlyComparison";
 
 type BuildHomeKpisFromAccountingParams = {
   entries: AccountingEntry[];
   month: string;
+  monthlyComparison?: MonthlyComparisonSummary;
 };
 
-export function buildHomeKpisFromAccounting({ entries, month }: BuildHomeKpisFromAccountingParams): HomeKpi[] {
+export function buildHomeKpisFromAccounting({
+  entries,
+  month,
+  monthlyComparison
+}: BuildHomeKpisFromAccountingParams): HomeKpi[] {
   const summary = calculateMonthlyAccountingSummary(entries, month);
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const revenueCount = countByType(monthlyEntries, "revenue");
@@ -24,7 +31,9 @@ export function buildHomeKpisFromAccounting({ entries, month }: BuildHomeKpisFro
       subtitle: "保存データ反映",
       icon: "REV",
       tone: "blue",
-      trends: [{ label: "今月", value: `${revenueCount}件`, tone: "neutral" }]
+      trends: buildComparisonTrends(monthlyComparison, "revenue", [
+        { label: "今月", value: `${revenueCount}件`, tone: "neutral" }
+      ])
     },
     {
       id: "expenses",
@@ -33,7 +42,9 @@ export function buildHomeKpisFromAccounting({ entries, month }: BuildHomeKpisFro
       subtitle: `経費率 ${formatPercent(summary.expenseRatio)}`,
       icon: "COST",
       tone: "red",
-      trends: [{ label: "注意", value: "増加は要確認", tone: "warning" }]
+      trends: buildComparisonTrends(monthlyComparison, "expense", [
+        { label: "注意", value: "増加は要確認", tone: "warning" }
+      ])
     },
     {
       id: "profit",
@@ -43,7 +54,9 @@ export function buildHomeKpisFromAccounting({ entries, month }: BuildHomeKpisFro
       icon: "GAIN",
       tone: profitIsPositive ? "green" : "red",
       emphasis: true,
-      trends: [{ label: "状態", value: profitIsPositive ? "黒字" : "赤字", tone: profitIsPositive ? "positive" : "negative" }]
+      trends: buildComparisonTrends(monthlyComparison, "profit", [
+        { label: "状態", value: profitIsPositive ? "黒字" : "赤字", tone: profitIsPositive ? "positive" : "negative" }
+      ])
     },
     {
       id: "estimated-tax",
@@ -52,7 +65,9 @@ export function buildHomeKpisFromAccounting({ entries, month }: BuildHomeKpisFro
       subtitle: "概算税率 25%",
       icon: "TAX",
       tone: "purple",
-      trends: [{ label: "計算", value: "概算", tone: "neutral" }]
+      trends: buildComparisonTrends(monthlyComparison, "estimatedTax", [
+        { label: "計算", value: "概算", tone: "neutral" }
+      ])
     },
     {
       id: "investable-amount",
@@ -61,13 +76,13 @@ export function buildHomeKpisFromAccounting({ entries, month }: BuildHomeKpisFro
       subtitle: "利益 - 税金 - 生活費 - 事業予備費",
       icon: "PLAN",
       tone: investableIsPositive ? "teal" : "orange",
-      trends: [
+      trends: buildComparisonTrends(monthlyComparison, "investableAmount", [
         {
           label: "状態",
           value: investableIsPositive ? "余力あり" : "要調整",
           tone: investableIsPositive ? "positive" : "warning"
         }
-      ]
+      ])
     },
     {
       id: "household-spending",
@@ -76,7 +91,9 @@ export function buildHomeKpisFromAccounting({ entries, month }: BuildHomeKpisFro
       subtitle: "生活費入力分",
       icon: "LIFE",
       tone: "orange",
-      trends: [{ label: "今月", value: `${householdCount}件`, tone: "neutral" }]
+      trends: buildComparisonTrends(monthlyComparison, "household", [
+        { label: "今月", value: `${householdCount}件`, tone: "neutral" }
+      ])
     },
     ...getSampleKpis(["total-assets", "cash-ratio", "investment-gain", "learning-progress"])
   ];
@@ -105,4 +122,25 @@ function formatYen(value: number) {
 
 function formatPercent(value: number) {
   return `${(value * 100).toFixed(1)}%`;
+}
+
+function buildComparisonTrends(
+  comparison: MonthlyComparisonSummary | undefined,
+  key: MonthlyComparisonMetricKey,
+  fallbackTrends: KpiTrend[]
+): KpiTrend[] {
+  const metric = findMonthlyComparisonMetric(comparison, key);
+
+  if (!metric) {
+    return fallbackTrends;
+  }
+
+  if (metric.trend === "no_previous") {
+    return [{ label: "前月比", value: "前月データなし", tone: "neutral" }];
+  }
+
+  return [
+    { label: "前月比", value: metric.displayPercentageChange, tone: metric.tone },
+    { label: "差額", value: metric.displayDifference, tone: metric.tone }
+  ];
 }

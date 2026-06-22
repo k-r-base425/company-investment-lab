@@ -10,14 +10,16 @@ import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs"
 import { ImprovementActionsSection } from "../components/accounting/ImprovementActionsSection";
 import { ImprovementProgressSection } from "../components/accounting/ImprovementProgressSection";
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
+import { MonthlyComparisonCard } from "../components/accounting/MonthlyComparisonCard";
 import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import { buildAccountingInsights } from "../lib/accounting/buildAccountingInsights";
+import { buildMonthlyComparisonSummary } from "../lib/accounting/buildMonthlyComparisonSummary";
 import { buildImprovementActionsFromInsights } from "../lib/accounting/buildImprovementActionsFromInsights";
 import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
-import { defaultSelectedMonth } from "../lib/month/monthUtils";
+import { defaultSelectedMonth, formatYearMonthLabel, getPreviousMonth } from "../lib/month/monthUtils";
 import {
   deleteAccountingEntry,
   getAccountingEntriesByMonth,
@@ -40,6 +42,7 @@ export default function AccountingScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
   const [activeType, setActiveType] = useState<AccountingEntryType>("revenue");
   const [entries, setEntries] = useState<AccountingEntry[]>([]);
+  const [previousEntries, setPreviousEntries] = useState<AccountingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFallbackData, setIsFallbackData] = useState(false);
   const [storageError, setStorageError] = useState("");
@@ -51,7 +54,17 @@ export default function AccountingScreen() {
   const [actionMessage, setActionMessage] = useState("");
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousMonth = getPreviousMonth(selectedMonth);
+  const previousMonthLabel = formatYearMonthLabel(previousMonth);
   const monthlySummary = calculateMonthlyAccountingSummary(entries, selectedMonth);
+  const previousMonthlySummary =
+    previousEntries.length > 0 ? calculateMonthlyAccountingSummary(previousEntries, previousMonth) : null;
+  const monthlyComparison = buildMonthlyComparisonSummary({
+    currentMonth: selectedMonth,
+    currentSummary: monthlySummary,
+    previousMonth,
+    previousSummary: previousMonthlySummary
+  });
   const defaultEntryDate = `${selectedMonth}-05`;
 
   useEffect(() => {
@@ -65,10 +78,12 @@ export default function AccountingScreen() {
         await initAccountingStorage();
         await seedAccountingEntriesIfEmpty(sampleAccountingEntries);
         const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
+        const savedPreviousEntries = await getAccountingEntriesByMonth(previousMonth);
         await loadImprovementActions();
 
         if (!canceled) {
           setEntries(savedEntries);
+          setPreviousEntries(savedPreviousEntries);
           setIsFallbackData(false);
         }
       } catch {
@@ -79,6 +94,7 @@ export default function AccountingScreen() {
               ? sampleAccountingEntries.filter((entry) => entry.date.startsWith(selectedMonth))
               : []
           );
+          setPreviousEntries([]);
           setIsFallbackData(selectedMonth === defaultSelectedMonth);
           setIsActionLoading(false);
         }
@@ -102,11 +118,13 @@ export default function AccountingScreen() {
         clearTimeout(actionTimerRef.current);
       }
     };
-  }, [selectedMonth]);
+  }, [previousMonth, selectedMonth]);
 
   const reloadEntries = async () => {
     const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
+    const savedPreviousEntries = await getAccountingEntriesByMonth(previousMonth);
     setEntries(savedEntries);
+    setPreviousEntries(savedPreviousEntries);
     setIsFallbackData(false);
   };
 
@@ -204,7 +222,7 @@ export default function AccountingScreen() {
   const handleCreateImprovementActions = async () => {
     try {
       setActionError("");
-      const insights = buildAccountingInsights({ entries, month: selectedMonth });
+      const insights = buildAccountingInsights({ entries, month: selectedMonth, monthlyComparison });
       const actions = buildImprovementActionsFromInsights({ insights, period: selectedMonth });
       const result = await upsertImprovementActionsByActionKey(actions);
       await loadImprovementActions();
@@ -266,6 +284,12 @@ export default function AccountingScreen() {
 
           <AccountingSummaryCards summary={monthlySummary} />
 
+          <MonthlyComparisonCard
+            comparison={monthlyComparison}
+            currentMonthLabel={selectedMonthLabel}
+            previousMonthLabel={previousMonthLabel}
+          />
+
           <AccountingInsightsSection
             entries={entries}
             errorMessage={isFallbackData ? storageError : ""}
@@ -273,6 +297,7 @@ export default function AccountingScreen() {
             isLoading={isLoading}
             month={selectedMonth}
             monthLabel={selectedMonthLabel}
+            monthlyComparison={monthlyComparison}
           />
 
           <ImprovementActionsSection

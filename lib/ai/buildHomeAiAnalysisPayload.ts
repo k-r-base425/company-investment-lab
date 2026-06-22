@@ -1,18 +1,31 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
+import { buildMonthlyComparisonSummary } from "../accounting/buildMonthlyComparisonSummary";
+import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
+import { getPreviousMonth } from "../month/monthUtils";
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
 import type { ImprovementAction } from "../types/improvementAction";
+import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 
 export function buildHomeAiAnalysisPayload(
   entries: AccountingEntry[],
   month: string,
-  actions: ImprovementAction[] = []
+  actions: ImprovementAction[] = [],
+  monthlyComparison?: MonthlyComparisonSummary
 ): AiAnalysisPayload {
-  const accountingAnalysis = buildAccountingAnalysisPayload(entries, month);
+  const comparison =
+    monthlyComparison ??
+    buildMonthlyComparisonSummary({
+      currentMonth: month,
+      currentSummary: calculateMonthlyAccountingSummary(entries, month),
+      previousMonth: getPreviousMonth(month),
+      previousSummary: null
+    });
+  const accountingAnalysis = buildAccountingAnalysisPayload(entries, month, comparison);
   const { summary, categoryBreakdown } = accountingAnalysis;
   const householdCostBreakdown = buildHouseholdCostBreakdown(entries, month);
   const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
@@ -42,6 +55,7 @@ export function buildHomeAiAnalysisPayload(
     },
     accountingAnalysis,
     accountingInsights: accountingAnalysis.accountingInsights,
+    monthlyComparison: comparison,
     improvementActions,
     improvementProgress,
     monthlyChart: {

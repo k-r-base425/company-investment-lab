@@ -6,8 +6,10 @@ import { buildAiAnalysisPrompt } from "../../lib/ai/buildAiAnalysisPrompt";
 import { buildHomeAiAnalysisPayload } from "../../lib/ai/buildHomeAiAnalysisPayload";
 import { createAiAnalysisRun } from "../../lib/ai/createAiAnalysisRun";
 import { useSelectedMonth } from "../../contexts/SelectedMonthContext";
+import { buildMonthlyComparisonSummary } from "../../lib/accounting/buildMonthlyComparisonSummary";
+import { calculateMonthlyAccountingSummary } from "../../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../../lib/accounting/sampleAccountingEntries";
-import { defaultSelectedMonth } from "../../lib/month/monthUtils";
+import { defaultSelectedMonth, getPreviousMonth } from "../../lib/month/monthUtils";
 import { initAiAnalysisRunStorage, insertAiAnalysisRun } from "../../lib/storage/aiAnalysisRunRepository";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../../lib/storage/improvementActionRepository";
@@ -44,12 +46,25 @@ export function AiAnalysisCard() {
     try {
       await initAccountingStorage();
       const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
+      const previousMonth = getPreviousMonth(selectedMonth);
+      const savedPreviousEntries = await getAccountingEntriesByMonth(previousMonth);
       const entries =
         savedEntries.length > 0
           ? savedEntries
           : selectedMonth === defaultSelectedMonth
             ? sampleAccountingEntries
             : [];
+      const currentSummary = calculateMonthlyAccountingSummary(entries, selectedMonth);
+      const previousSummary =
+        savedPreviousEntries.length > 0
+          ? calculateMonthlyAccountingSummary(savedPreviousEntries, previousMonth)
+          : null;
+      const monthlyComparison = buildMonthlyComparisonSummary({
+        currentMonth: selectedMonth,
+        currentSummary,
+        previousMonth,
+        previousSummary
+      });
       let improvementActions: ImprovementAction[] = [];
 
       try {
@@ -59,7 +74,7 @@ export function AiAnalysisCard() {
         improvementActions = [];
       }
 
-      const payload = buildHomeAiAnalysisPayload(entries, selectedMonth, improvementActions);
+      const payload = buildHomeAiAnalysisPayload(entries, selectedMonth, improvementActions, monthlyComparison);
       const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);
       setAccountingEntryCount(entries.length);

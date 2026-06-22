@@ -2,13 +2,15 @@ import { buildAccountingBreakdowns } from "./buildAccountingBreakdowns";
 import { calculateMonthlyAccountingSummary } from "./calculateAccountingSummary";
 import type { AccountingEntry } from "../types/accounting";
 import type { AccountingInsight, AccountingInsightSeverity } from "../types/accountingInsight";
+import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 
 type BuildAccountingInsightsParams = {
   entries: AccountingEntry[];
   month: string;
+  monthlyComparison?: MonthlyComparisonSummary;
 };
 
-export function buildAccountingInsights({ entries, month }: BuildAccountingInsightsParams): AccountingInsight[] {
+export function buildAccountingInsights({ entries, month, monthlyComparison }: BuildAccountingInsightsParams): AccountingInsight[] {
   const summary = calculateMonthlyAccountingSummary(entries, month);
   const breakdowns = buildAccountingBreakdowns(entries, month);
   const insights: AccountingInsight[] = [];
@@ -130,7 +132,91 @@ export function buildAccountingInsights({ entries, month }: BuildAccountingInsig
     });
   }
 
+  insights.push(...buildMonthlyComparisonInsights(monthlyComparison));
+
   return sortInsightsByPriority(insights);
+}
+
+function buildMonthlyComparisonInsights(monthlyComparison?: MonthlyComparisonSummary): AccountingInsight[] {
+  if (!monthlyComparison?.hasPreviousData) {
+    return [];
+  }
+
+  const insights: AccountingInsight[] = [];
+  const expense = monthlyComparison.metrics.find((metric) => metric.key === "expense");
+  const profit = monthlyComparison.metrics.find((metric) => metric.key === "profit");
+  const investableAmount = monthlyComparison.metrics.find((metric) => metric.key === "investableAmount");
+
+  if (expense && expense.difference !== null && expense.difference > 0) {
+    insights.push({
+      id: "monthly-comparison-expense-increase",
+      category: "expense",
+      severity: "warning",
+      title: "経費が前月より増えています",
+      message: "選択月の経費が前月より増えています。増加したカテゴリや固定費を確認しましょう。",
+      metricLabel: "経費 前月差",
+      metricValue: expense.displayDifference,
+      recommendation: "継続的な支出か一時的な支出かを分けて、来月も続く負担を確認しましょう。",
+      actionItems: [
+        "経費ランキング上位カテゴリを確認する",
+        "前月より増えた支出が一時的か継続的か確認する",
+        "来月も続く固定費がないか確認する"
+      ],
+      relatedData: [
+        { label: "前月比", value: expense.displayPercentageChange },
+        { label: "現在値", value: expense.displayValue }
+      ],
+      priority: 79
+    });
+  }
+
+  if (profit && profit.difference !== null && profit.difference < 0) {
+    insights.push({
+      id: "monthly-comparison-profit-decrease",
+      category: "profitability",
+      severity: "warning",
+      title: "利益が前月より減っています",
+      message: "前月と比べて利益が減少しています。売上減少か経費増加かを分けて確認しましょう。",
+      metricLabel: "利益 前月差",
+      metricValue: profit.displayDifference,
+      recommendation: "売上と経費の前月差を並べて、利益が減った要因を切り分けましょう。",
+      actionItems: [
+        "売上の前月差を確認する",
+        "経費の前月差を確認する",
+        "利益率を確認する"
+      ],
+      relatedData: [
+        { label: "前月比", value: profit.displayPercentageChange },
+        { label: "現在値", value: profit.displayValue }
+      ],
+      priority: 77
+    });
+  }
+
+  if (investableAmount && investableAmount.difference !== null && investableAmount.difference > 0) {
+    insights.push({
+      id: "monthly-comparison-investable-increase",
+      category: "cashflow",
+      severity: "good",
+      title: "投資可能額が前月より増えています",
+      message: "前月と比べて投資に回せる余力が増えています。税金・生活費・事業予備費を確保したうえで判断しましょう。",
+      metricLabel: "投資可能額 前月差",
+      metricValue: investableAmount.displayDifference,
+      recommendation: "余力の使い道を、投資・学習・事業予備費に分けて検討しましょう。",
+      actionItems: [
+        "税金目安を別枠で確認する",
+        "現金比率を確認する",
+        "投資額を増やすか、事業予備費を厚くするか検討する"
+      ],
+      relatedData: [
+        { label: "前月比", value: investableAmount.displayPercentageChange },
+        { label: "現在値", value: investableAmount.displayValue }
+      ],
+      priority: 19
+    });
+  }
+
+  return insights;
 }
 
 function buildExpenseRatioInsight(expenseRatio: number): AccountingInsight {

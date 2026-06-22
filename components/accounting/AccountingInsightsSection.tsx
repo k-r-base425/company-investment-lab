@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { buildAccountingInsights } from "../../lib/accounting/buildAccountingInsights";
 import type { AccountingEntry } from "../../lib/types/accounting";
+import type { MonthlyComparisonSummary } from "../../lib/types/monthlyComparison";
 import { AccountingInsightCard } from "./AccountingInsightCard";
 
 type AccountingInsightsSectionProps = {
@@ -12,6 +13,7 @@ type AccountingInsightsSectionProps = {
   isLoading: boolean;
   month: string;
   monthLabel: string;
+  monthlyComparison?: MonthlyComparisonSummary;
 };
 
 export function AccountingInsightsSection({
@@ -20,9 +22,13 @@ export function AccountingInsightsSection({
   isFallback,
   isLoading,
   month,
-  monthLabel
+  monthLabel,
+  monthlyComparison
 }: AccountingInsightsSectionProps) {
-  const insights = useMemo(() => buildAccountingInsights({ entries, month }), [entries, month]);
+  const insights = useMemo(
+    () => buildAccountingInsights({ entries, month, monthlyComparison }),
+    [entries, month, monthlyComparison]
+  );
 
   return (
     <View style={styles.section}>

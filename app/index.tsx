@@ -12,11 +12,13 @@ import { HomeMonthlyChartCard } from "../components/home/HomeMonthlyChartCard";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { useSelectedMonth } from "../contexts/SelectedMonthContext";
+import { buildMonthlyComparisonSummary } from "../lib/accounting/buildMonthlyComparisonSummary";
+import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
 import { buildHomeKpisFromAccounting } from "../lib/home/buildHomeKpisFromAccounting";
 import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
 import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
-import { defaultSelectedMonth } from "../lib/month/monthUtils";
+import { defaultSelectedMonth, getPreviousMonth } from "../lib/month/monthUtils";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../lib/storage/improvementActionRepository";
 import type { AccountingEntry } from "../lib/types/accounting";
@@ -27,6 +29,7 @@ const accountingLoadErrorMessage = "会計データの読み込みに失敗し�
 export default function HomeScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
   const [accountingEntries, setAccountingEntries] = useState<AccountingEntry[]>(sampleAccountingEntries);
+  const [previousAccountingEntries, setPreviousAccountingEntries] = useState<AccountingEntry[]>([]);
   const [savedEntryCount, setSavedEntryCount] = useState(0);
   const [isFallback, setIsFallback] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,9 +37,24 @@ export default function HomeScreen() {
   const [improvementActions, setImprovementActions] = useState<ImprovementAction[]>([]);
   const [isActionLoading, setIsActionLoading] = useState(true);
   const [actionErrorMessage, setActionErrorMessage] = useState("");
+  const previousMonth = useMemo(() => getPreviousMonth(selectedMonth), [selectedMonth]);
+  const monthlyComparison = useMemo(() => {
+    const currentSummary = calculateMonthlyAccountingSummary(accountingEntries, selectedMonth);
+    const previousSummary =
+      previousAccountingEntries.length > 0
+        ? calculateMonthlyAccountingSummary(previousAccountingEntries, previousMonth)
+        : null;
+
+    return buildMonthlyComparisonSummary({
+      currentMonth: selectedMonth,
+      currentSummary,
+      previousMonth,
+      previousSummary
+    });
+  }, [accountingEntries, previousAccountingEntries, previousMonth, selectedMonth]);
   const kpis = useMemo(
-    () => buildHomeKpisFromAccounting({ entries: accountingEntries, month: selectedMonth }),
-    [accountingEntries, selectedMonth]
+    () => buildHomeKpisFromAccounting({ entries: accountingEntries, month: selectedMonth, monthlyComparison }),
+    [accountingEntries, monthlyComparison, selectedMonth]
   );
   const hasNoData = !isFallback && savedEntryCount === 0;
 
@@ -46,6 +64,8 @@ export default function HomeScreen() {
       setErrorMessage("");
       await initAccountingStorage();
       const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
+      const savedPreviousEntries = await getAccountingEntriesByMonth(previousMonth);
+      setPreviousAccountingEntries(savedPreviousEntries);
 
       if (savedEntries.length > 0) {
         setAccountingEntries(savedEntries);
@@ -65,6 +85,7 @@ export default function HomeScreen() {
       setSavedEntryCount(0);
       setIsFallback(false);
     } catch {
+      setPreviousAccountingEntries([]);
       if (selectedMonth === defaultSelectedMonth) {
         setAccountingEntries(sampleAccountingEntries);
         setSavedEntryCount(sampleAccountingEntries.length);
@@ -78,7 +99,7 @@ export default function HomeScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedMonth]);
+  }, [previousMonth, selectedMonth]);
 
   const loadImprovementActions = useCallback(async () => {
     try {
