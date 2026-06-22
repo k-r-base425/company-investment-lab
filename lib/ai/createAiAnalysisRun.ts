@@ -16,7 +16,7 @@ export function createAiAnalysisRun({
   promptText,
   source = "home_ai_card",
   theme = "monthly_review",
-  title = "2026年6月 月次AI分析"
+  title = "月次AI分析"
 }: CreateAiAnalysisRunParams): AiAnalysisRun {
   const now = new Date().toISOString();
 

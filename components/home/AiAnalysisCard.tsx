@@ -5,7 +5,9 @@ import * as Clipboard from "expo-clipboard";
 import { buildAiAnalysisPrompt } from "../../lib/ai/buildAiAnalysisPrompt";
 import { buildHomeAiAnalysisPayload } from "../../lib/ai/buildHomeAiAnalysisPayload";
 import { createAiAnalysisRun } from "../../lib/ai/createAiAnalysisRun";
+import { useSelectedMonth } from "../../contexts/SelectedMonthContext";
 import { sampleAccountingEntries } from "../../lib/accounting/sampleAccountingEntries";
+import { defaultSelectedMonth } from "../../lib/month/monthUtils";
 import { initAiAnalysisRunStorage, insertAiAnalysisRun } from "../../lib/storage/aiAnalysisRunRepository";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../../lib/storage/improvementActionRepository";
@@ -13,9 +15,8 @@ import type { ImprovementAction } from "../../lib/types/improvementAction";
 
 type CopyStatus = "idle" | "success" | "historyError" | "error";
 
-const targetMonth = "2026-06";
-
 export function AiAnalysisCard() {
+  const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
   const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
   const [accountingEntryCount, setAccountingEntryCount] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -42,25 +43,37 @@ export function AiAnalysisCard() {
   const handleCopy = async () => {
     try {
       await initAccountingStorage();
-      const savedEntries = await getAccountingEntriesByMonth(targetMonth);
-      const entries = savedEntries.length > 0 ? savedEntries : sampleAccountingEntries;
+      const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
+      const entries =
+        savedEntries.length > 0
+          ? savedEntries
+          : selectedMonth === defaultSelectedMonth
+            ? sampleAccountingEntries
+            : [];
       let improvementActions: ImprovementAction[] = [];
 
       try {
         await initImprovementActionStorage();
-        improvementActions = await getImprovementActionsByPeriod(targetMonth);
+        improvementActions = await getImprovementActionsByPeriod(selectedMonth);
       } catch {
         improvementActions = [];
       }
 
-      const payload = buildHomeAiAnalysisPayload(entries, targetMonth, improvementActions);
+      const payload = buildHomeAiAnalysisPayload(entries, selectedMonth, improvementActions);
       const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);
       setAccountingEntryCount(entries.length);
 
       try {
         await initAiAnalysisRunStorage();
-        await insertAiAnalysisRun(createAiAnalysisRun({ payload, period: targetMonth, promptText: prompt }));
+        await insertAiAnalysisRun(
+          createAiAnalysisRun({
+            payload,
+            period: selectedMonth,
+            promptText: prompt,
+            title: `${selectedMonthLabel} 月次AI分析`
+          })
+        );
         setCopyStatus("success");
       } catch {
         setCopyStatus("historyError");
@@ -89,7 +102,7 @@ export function AiAnalysisCard() {
       </Text>
 
       <View style={styles.metaBox}>
-        <InfoRow label="対象期間" value="2026年6月" />
+        <InfoRow label="対象期間" value={selectedMonthLabel} />
         <InfoRow label="含まれるデータ" value="会計 / 家計 / 投資 / 学習 / 月グラフ" />
         <InfoRow
           label="会計入力データ"

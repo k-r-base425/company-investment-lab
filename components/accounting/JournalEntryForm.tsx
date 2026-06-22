@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { accountingTypeTones, journalAccountOptions } from "../../lib/accounting/accountingOptions";
+import { defaultSelectedMonth } from "../../lib/month/monthUtils";
 import { parseAmount, validateJournalEntryInput } from "../../lib/accounting/validation";
 import type { AccountingEntry } from "../../lib/types/accounting";
 
 type JournalEntryFormProps = {
+  defaultDate?: string;
   editingEntry?: AccountingEntry | null;
   onCancelEdit?: () => void;
   onSubmit: (entry: AccountingEntry) => Promise<boolean> | boolean | void;
@@ -13,12 +15,13 @@ type JournalEntryFormProps = {
 };
 
 export function JournalEntryForm({
+  defaultDate = `${defaultSelectedMonth}-05`,
   editingEntry = null,
   onCancelEdit,
   onSubmit,
   submitLabel = "入力を追加"
 }: JournalEntryFormProps) {
-  const [date, setDate] = useState("2026-06-05");
+  const [date, setDate] = useState(defaultDate);
   const [debitAccount, setDebitAccount] = useState("消耗品費");
   const [debitAmount, setDebitAmount] = useState("");
   const [creditAccount, setCreditAccount] = useState("現金");
@@ -45,10 +48,10 @@ export function JournalEntryForm({
     }
 
     resetForm();
-  }, [editingEntry]);
+  }, [editingEntry, defaultDate]);
 
   const resetForm = () => {
-    setDate("2026-06-05");
+    setDate(defaultDate);
     setDebitAccount("消耗品費");
     setDebitAmount("");
     setCreditAccount("現金");

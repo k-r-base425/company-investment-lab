@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { MonthSelector } from "../components/common/MonthSelector";
 import { AccountingEntryForm } from "../components/accounting/AccountingEntryForm";
 import { AccountingAnalysisSection } from "../components/accounting/AccountingAnalysisSection";
 import { AccountingInsightsSection } from "../components/accounting/AccountingInsightsSection";
@@ -11,10 +12,12 @@ import { ImprovementProgressSection } from "../components/accounting/Improvement
 import { JournalEntryForm } from "../components/accounting/JournalEntryForm";
 import { RecentEntriesList } from "../components/accounting/RecentEntriesList";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import { buildAccountingInsights } from "../lib/accounting/buildAccountingInsights";
 import { buildImprovementActionsFromInsights } from "../lib/accounting/buildImprovementActionsFromInsights";
 import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
+import { defaultSelectedMonth } from "../lib/month/monthUtils";
 import {
   deleteAccountingEntry,
   getAccountingEntriesByMonth,
@@ -33,9 +36,8 @@ import {
 import type { AccountingEntry, AccountingEntryType } from "../lib/types/accounting";
 import type { ImprovementAction } from "../lib/types/improvementAction";
 
-const targetMonth = "2026-06";
-
 export default function AccountingScreen() {
+  const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
   const [activeType, setActiveType] = useState<AccountingEntryType>("revenue");
   const [entries, setEntries] = useState<AccountingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +51,8 @@ export default function AccountingScreen() {
   const [actionMessage, setActionMessage] = useState("");
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const monthlySummary = calculateMonthlyAccountingSummary(entries, targetMonth);
+  const monthlySummary = calculateMonthlyAccountingSummary(entries, selectedMonth);
+  const defaultEntryDate = `${selectedMonth}-05`;
 
   useEffect(() => {
     let canceled = false;
@@ -61,7 +64,7 @@ export default function AccountingScreen() {
         setStorageError("");
         await initAccountingStorage();
         await seedAccountingEntriesIfEmpty(sampleAccountingEntries);
-        const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+        const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
         await loadImprovementActions();
 
         if (!canceled) {
@@ -71,8 +74,12 @@ export default function AccountingScreen() {
       } catch {
         if (!canceled) {
           setStorageError("ローカル保存の読み込みに失敗しました。");
-          setEntries(sampleAccountingEntries.filter((entry) => entry.date.startsWith(targetMonth)));
-          setIsFallbackData(true);
+          setEntries(
+            selectedMonth === defaultSelectedMonth
+              ? sampleAccountingEntries.filter((entry) => entry.date.startsWith(selectedMonth))
+              : []
+          );
+          setIsFallbackData(selectedMonth === defaultSelectedMonth);
           setIsActionLoading(false);
         }
       } finally {
@@ -95,10 +102,10 @@ export default function AccountingScreen() {
         clearTimeout(actionTimerRef.current);
       }
     };
-  }, []);
+  }, [selectedMonth]);
 
   const reloadEntries = async () => {
-    const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+    const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
     setEntries(savedEntries);
     setIsFallbackData(false);
   };
@@ -108,7 +115,7 @@ export default function AccountingScreen() {
       setIsActionLoading(true);
       setActionError("");
       await initImprovementActionStorage();
-      const savedActions = await getImprovementActionsByPeriod(targetMonth);
+      const savedActions = await getImprovementActionsByPeriod(selectedMonth);
       setImprovementActions(savedActions);
     } catch {
       setActionError("改善アクションの読み込みに失敗しました。");
@@ -197,8 +204,8 @@ export default function AccountingScreen() {
   const handleCreateImprovementActions = async () => {
     try {
       setActionError("");
-      const insights = buildAccountingInsights({ entries, month: targetMonth });
-      const actions = buildImprovementActionsFromInsights({ insights, period: targetMonth });
+      const insights = buildAccountingInsights({ entries, month: selectedMonth });
+      const actions = buildImprovementActionsFromInsights({ insights, period: selectedMonth });
       const result = await upsertImprovementActionsByActionKey(actions);
       await loadImprovementActions();
 
@@ -252,8 +259,10 @@ export default function AccountingScreen() {
               <Text style={styles.heading}>会計入力</Text>
               <Text style={styles.subtitle}>売上・経費・家計・仕訳を記録する</Text>
             </View>
-            <Text style={styles.monthLabel}>2026年6月</Text>
+            <Text style={styles.monthLabel}>{selectedMonthLabel}</Text>
           </View>
+
+          <MonthSelector />
 
           <AccountingSummaryCards summary={monthlySummary} />
 
@@ -262,8 +271,8 @@ export default function AccountingScreen() {
             errorMessage={isFallbackData ? storageError : ""}
             isFallback={isFallbackData}
             isLoading={isLoading}
-            month={targetMonth}
-            monthLabel="2026年6月"
+            month={selectedMonth}
+            monthLabel={selectedMonthLabel}
           />
 
           <ImprovementActionsSection
@@ -272,19 +281,19 @@ export default function AccountingScreen() {
             errorMessage={actionError}
             isFallback={isFallbackData}
             isLoading={isActionLoading}
-            monthLabel="2026年6月"
+            monthLabel={selectedMonthLabel}
             onCreateFromInsights={handleCreateImprovementActions}
             onDelete={handleDeleteImprovementAction}
             onToggleStatus={handleToggleImprovementActionStatus}
-            period={targetMonth}
+            period={selectedMonth}
           />
 
           <ImprovementProgressSection
             actions={improvementActions}
             entries={entries}
             isLoading={isLoading || isActionLoading}
-            monthLabel="2026年6月"
-            period={targetMonth}
+            monthLabel={selectedMonthLabel}
+            period={selectedMonth}
           />
 
           <AccountingAnalysisSection
@@ -292,8 +301,8 @@ export default function AccountingScreen() {
             errorMessage={isFallbackData ? storageError : ""}
             isFallback={isFallbackData}
             isLoading={isLoading}
-            month={targetMonth}
-            monthLabel="2026年6月"
+            month={selectedMonth}
+            monthLabel={selectedMonthLabel}
           />
 
           {isLoading ? <Text style={styles.statusMessage}>保存済みデータを読み込んでいます...</Text> : null}
@@ -304,6 +313,7 @@ export default function AccountingScreen() {
 
           {activeType === "journal" ? (
             <JournalEntryForm
+              defaultDate={defaultEntryDate}
               editingEntry={editingEntry?.type === "journal" ? editingEntry : null}
               onCancelEdit={handleCancelEdit}
               onSubmit={handleSubmitEntry}
@@ -311,6 +321,7 @@ export default function AccountingScreen() {
             />
           ) : (
             <AccountingEntryForm
+              defaultDate={defaultEntryDate}
               editingEntry={editingEntry?.type === activeType ? editingEntry : null}
               onCancelEdit={handleCancelEdit}
               onSubmit={handleSubmitEntry}

@@ -3,9 +3,12 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { AiAnalysisHistorySection } from "../components/ai/AiAnalysisHistorySection";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
 
 export default function LearningScreen() {
+  const { selectedMonthLabel } = useSelectedMonth();
+
   return (
     <View style={styles.root}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -16,7 +19,7 @@ export default function LearningScreen() {
               <Text style={styles.heading}>学習・AI分析</Text>
               <Text style={styles.subtitle}>学習テーマとAI分析履歴を確認する</Text>
             </View>
-            <Text style={styles.monthLabel}>2026年6月</Text>
+            <Text style={styles.monthLabel}>{selectedMonthLabel}</Text>
           </View>
 
           <TodayLearningCard topics={sampleLearningTopics} />

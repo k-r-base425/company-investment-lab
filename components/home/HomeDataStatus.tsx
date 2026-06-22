@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 type HomeDataStatusProps = {
   entryCount: number;
   errorMessage?: string;
+  hasNoData?: boolean;
   isFallback: boolean;
   isLoading: boolean;
   monthLabel: string;
@@ -12,13 +13,14 @@ type HomeDataStatusProps = {
 export function HomeDataStatus({
   entryCount,
   errorMessage,
+  hasNoData = false,
   isFallback,
   isLoading,
   monthLabel,
   onRefresh
 }: HomeDataStatusProps) {
-  const title = getTitle({ errorMessage, isFallback, isLoading });
-  const detail = isFallback ? `${monthLabel} / 入力データなし` : `${monthLabel} / ${entryCount}件`;
+  const title = getTitle({ errorMessage, hasNoData, isFallback, isLoading });
+  const detail = hasNoData ? `${monthLabel} / 入力データなし` : `${monthLabel} / ${entryCount}件`;
 
   return (
     <View style={[styles.card, errorMessage && styles.errorCard]}>
@@ -35,10 +37,12 @@ export function HomeDataStatus({
 
 function getTitle({
   errorMessage,
+  hasNoData,
   isFallback,
   isLoading
 }: {
   errorMessage?: string;
+  hasNoData: boolean;
   isFallback: boolean;
   isLoading: boolean;
 }) {
@@ -50,7 +54,11 @@ function getTitle({
     return errorMessage;
   }
 
-  return isFallback ? "サンプルデータ表示中" : "保存済み会計データを反映中";
+  if (isFallback) {
+    return "サンプルデータ表示中";
+  }
+
+  return hasNoData ? "入力データなし" : "保存済み会計データを反映中";
 }
 
 const styles = StyleSheet.create({

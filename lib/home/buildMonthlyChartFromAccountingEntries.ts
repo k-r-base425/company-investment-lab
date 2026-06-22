@@ -1,3 +1,4 @@
+import { createMonthDays } from "../month/monthUtils";
 import type { AccountingEntry } from "../types/accounting";
 import type { MonthlyChartData, MonthlyChartDay, MonthlyChartMetric, MonthlyChartStatus } from "../types/monthlyChart";
 
@@ -22,11 +23,8 @@ export function buildMonthlyChartFromAccountingEntries({
   metric,
   month
 }: BuildMonthlyChartFromAccountingEntriesParams): MonthlyChartData {
-  const daysInMonth = getDaysInMonth(month);
   const totalsByDay = buildTotalsByDay(entries, month);
-  const baseDays: MonthlyChartDay[] = Array.from({ length: daysInMonth }, (_, index) => {
-    const day = index + 1;
-    const date = `${month}-${String(day).padStart(2, "0")}`;
+  const baseDays: MonthlyChartDay[] = createMonthDays(month).map(({ date, day }) => {
     const totals = totalsByDay.get(day) ?? createEmptyDayTotals();
     const profit = totals.revenueTotal - totals.expenseTotal;
     const hasInputForMetric = getHasInputForMetric(totals, metric);
@@ -188,16 +186,4 @@ function createEmptyDayTotals(): DayTotals {
     expenseEntryCount: 0,
     householdEntryCount: 0
   };
-}
-
-function getDaysInMonth(month: string) {
-  const [yearText, monthText] = month.split("-");
-  const year = Number(yearText);
-  const monthNumber = Number(monthText);
-
-  if (!Number.isInteger(year) || !Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) {
-    return 30;
-  }
-
-  return new Date(year, monthNumber, 0).getDate();
 }

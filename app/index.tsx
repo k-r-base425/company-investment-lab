@@ -4,26 +4,28 @@ import { useFocusEffect } from "expo-router";
 
 import { AiAnalysisCard } from "../components/home/AiAnalysisCard";
 import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
+import { MonthSelector } from "../components/common/MonthSelector";
 import { HomeDataStatus } from "../components/home/HomeDataStatus";
 import { HomeImprovementActionsCard } from "../components/home/HomeImprovementActionsCard";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
 import { HomeMonthlyChartCard } from "../components/home/HomeMonthlyChartCard";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
 import { buildHomeKpisFromAccounting } from "../lib/home/buildHomeKpisFromAccounting";
 import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
 import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
+import { defaultSelectedMonth } from "../lib/month/monthUtils";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../lib/storage/improvementActionRepository";
 import type { AccountingEntry } from "../lib/types/accounting";
 import type { ImprovementAction } from "../lib/types/improvementAction";
 
-const targetMonth = "2026-06";
-const monthLabel = "2026年6月";
-const accountingLoadErrorMessage = "会計データの読み込みに失敗しました。サンプルデータを表示しています。";
+const accountingLoadErrorMessage = "会計データの読み込みに失敗しました。";
 
 export default function HomeScreen() {
+  const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
   const [accountingEntries, setAccountingEntries] = useState<AccountingEntry[]>(sampleAccountingEntries);
   const [savedEntryCount, setSavedEntryCount] = useState(0);
   const [isFallback, setIsFallback] = useState(true);
@@ -33,16 +35,17 @@ export default function HomeScreen() {
   const [isActionLoading, setIsActionLoading] = useState(true);
   const [actionErrorMessage, setActionErrorMessage] = useState("");
   const kpis = useMemo(
-    () => buildHomeKpisFromAccounting({ entries: accountingEntries, month: targetMonth }),
-    [accountingEntries]
+    () => buildHomeKpisFromAccounting({ entries: accountingEntries, month: selectedMonth }),
+    [accountingEntries, selectedMonth]
   );
+  const hasNoData = !isFallback && savedEntryCount === 0;
 
   const loadAccountingEntries = useCallback(async () => {
     try {
       setIsLoading(true);
       setErrorMessage("");
       await initAccountingStorage();
-      const savedEntries = await getAccountingEntriesByMonth(targetMonth);
+      const savedEntries = await getAccountingEntriesByMonth(selectedMonth);
 
       if (savedEntries.length > 0) {
         setAccountingEntries(savedEntries);
@@ -51,25 +54,38 @@ export default function HomeScreen() {
         return;
       }
 
-      setAccountingEntries(sampleAccountingEntries);
+      if (selectedMonth === defaultSelectedMonth) {
+        setAccountingEntries(sampleAccountingEntries);
+        setSavedEntryCount(sampleAccountingEntries.length);
+        setIsFallback(true);
+        return;
+      }
+
+      setAccountingEntries([]);
       setSavedEntryCount(0);
-      setIsFallback(true);
+      setIsFallback(false);
     } catch {
-      setAccountingEntries(sampleAccountingEntries);
-      setSavedEntryCount(0);
-      setIsFallback(true);
+      if (selectedMonth === defaultSelectedMonth) {
+        setAccountingEntries(sampleAccountingEntries);
+        setSavedEntryCount(sampleAccountingEntries.length);
+        setIsFallback(true);
+      } else {
+        setAccountingEntries([]);
+        setSavedEntryCount(0);
+        setIsFallback(false);
+      }
       setErrorMessage(accountingLoadErrorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedMonth]);
 
   const loadImprovementActions = useCallback(async () => {
     try {
       setIsActionLoading(true);
       setActionErrorMessage("");
       await initImprovementActionStorage();
-      const savedActions = await getImprovementActionsByPeriod(targetMonth);
+      const savedActions = await getImprovementActionsByPeriod(selectedMonth);
       setImprovementActions(savedActions);
     } catch {
       setImprovementActions([]);
@@ -77,7 +93,7 @@ export default function HomeScreen() {
     } finally {
       setIsActionLoading(false);
     }
-  }, []);
+  }, [selectedMonth]);
 
   useFocusEffect(
     useCallback(() => {
@@ -95,15 +111,18 @@ export default function HomeScreen() {
               <Text style={styles.kicker}>Account Invest Lab</Text>
               <Text style={styles.heading}>ダッシュボード</Text>
             </View>
-            <Text style={styles.monthLabel}>{monthLabel}</Text>
+            <Text style={styles.monthLabel}>{selectedMonthLabel}</Text>
           </View>
+
+          <MonthSelector />
 
           <HomeDataStatus
             entryCount={savedEntryCount}
             errorMessage={errorMessage}
+            hasNoData={hasNoData}
             isFallback={isFallback}
             isLoading={isLoading}
-            monthLabel={monthLabel}
+            monthLabel={selectedMonthLabel}
             onRefresh={loadAccountingEntries}
           />
 
@@ -114,8 +133,8 @@ export default function HomeScreen() {
             errorMessage={errorMessage}
             isFallback={isFallback}
             isLoading={isLoading}
-            month={targetMonth}
-            monthLabel={monthLabel}
+            month={selectedMonth}
+            monthLabel={selectedMonthLabel}
           />
 
           <AssetAllocationCard summary={sampleAssetAllocation} />
@@ -127,8 +146,8 @@ export default function HomeScreen() {
             entries={accountingEntries}
             errorMessage={actionErrorMessage}
             isLoading={isActionLoading}
-            monthLabel={monthLabel}
-            period={targetMonth}
+            monthLabel={selectedMonthLabel}
+            period={selectedMonth}
           />
 
           <AiAnalysisCard />

@@ -10,6 +10,7 @@ import {
   spendingJudgementOptions
 } from "../../lib/accounting/accountingOptions";
 import { getDefaultCostBehavior, getDefaultSpendingJudgement } from "../../lib/accounting/categoryRules";
+import { defaultSelectedMonth } from "../../lib/month/monthUtils";
 import { parseAmount, validateAccountingEntryInput } from "../../lib/accounting/validation";
 import type {
   AccountingEntry,
@@ -21,6 +22,7 @@ import type {
 
 type AccountingEntryFormProps = {
   type: Exclude<AccountingEntryType, "journal">;
+  defaultDate?: string;
   editingEntry?: AccountingEntry | null;
   onCancelEdit?: () => void;
   onSubmit: (entry: AccountingEntry) => Promise<boolean> | boolean | void;
@@ -29,12 +31,13 @@ type AccountingEntryFormProps = {
 
 export function AccountingEntryForm({
   type,
+  defaultDate = `${defaultSelectedMonth}-05`,
   editingEntry = null,
   onCancelEdit,
   onSubmit,
   submitLabel = "入力を追加"
 }: AccountingEntryFormProps) {
-  const [date, setDate] = useState("2026-06-05");
+  const [date, setDate] = useState(defaultDate);
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(getCategories(type)[0] ?? "");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(getPaymentMethods(type)[0] ?? "その他");
@@ -60,7 +63,7 @@ export function AccountingEntryForm({
     }
 
     const initialCategory = getCategories(type)[0] ?? "";
-    setDate("2026-06-05");
+    setDate(defaultDate);
     setAmount("");
     setCategory(initialCategory);
     setPaymentMethod(getPaymentMethods(type)[0] ?? "その他");
@@ -69,7 +72,7 @@ export function AccountingEntryForm({
     setCostBehavior(getDefaultCostBehavior(initialCategory));
     setSpendingJudgement(getDefaultSpendingJudgement(initialCategory));
     setError("");
-  }, [type, editingEntry]);
+  }, [type, editingEntry, defaultDate]);
 
   const tone = accountingTypeTones[type];
   const categories = getCategories(type);
@@ -78,7 +81,7 @@ export function AccountingEntryForm({
 
   const resetForm = () => {
     const initialCategory = getCategories(type)[0] ?? "";
-    setDate("2026-06-05");
+    setDate(defaultDate);
     setAmount("");
     setCategory(initialCategory);
     setPaymentMethod(getPaymentMethods(type)[0] ?? "その他");

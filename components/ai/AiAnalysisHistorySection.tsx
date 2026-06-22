@@ -4,6 +4,7 @@ import * as Clipboard from "expo-clipboard";
 
 import { AiAnalysisRunEditor } from "./AiAnalysisRunEditor";
 import { AiAnalysisRunList } from "./AiAnalysisRunList";
+import { useSelectedMonth } from "../../contexts/SelectedMonthContext";
 import {
   deleteAiAnalysisRun,
   getAiAnalysisRunsByPeriod,
@@ -14,9 +15,8 @@ import type { AiAnalysisRun } from "../../lib/types/aiAnalysisRun";
 
 type FeedbackTone = "error" | "success";
 
-const targetPeriod = "2026-06";
-
 export function AiAnalysisHistorySection() {
+  const { selectedMonth } = useSelectedMonth();
   const [runs, setRuns] = useState<AiAnalysisRun[]>([]);
   const [selectedRun, setSelectedRun] = useState<AiAnalysisRun | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +32,7 @@ export function AiAnalysisHistorySection() {
         setIsLoading(true);
         setErrorMessage("");
         await initAiAnalysisRunStorage();
-        const savedRuns = await getAiAnalysisRunsByPeriod(targetPeriod);
+        const savedRuns = await getAiAnalysisRunsByPeriod(selectedMonth);
 
         if (!canceled) {
           setRuns(savedRuns);
@@ -57,10 +57,10 @@ export function AiAnalysisHistorySection() {
         clearTimeout(feedbackTimerRef.current);
       }
     };
-  }, []);
+  }, [selectedMonth]);
 
   const reloadRuns = async () => {
-    const savedRuns = await getAiAnalysisRunsByPeriod(targetPeriod);
+    const savedRuns = await getAiAnalysisRunsByPeriod(selectedMonth);
     setRuns(savedRuns);
     setSelectedRun((currentRun) => {
       if (!currentRun) {
