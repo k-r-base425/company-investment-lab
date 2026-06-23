@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 const tabs = [
   { id: "home", label: "ホーム", icon: "H", href: "/" },
   { id: "accounting", label: "会計", icon: "A", href: "/accounting" },
-  { id: "investment", label: "投資", icon: "I" },
+  { id: "investment", label: "投資", icon: "I", href: "/investment" },
   { id: "learning", label: "学習", icon: "L", href: "/learning" },
   { id: "settings", label: "設定", icon: "S" }
 ] as const;
