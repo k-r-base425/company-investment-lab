@@ -104,13 +104,16 @@ export function AiAnalysisCard() {
       }
 
       let investmentHoldings = sampleInvestmentHoldings;
+      let investmentDataSource: "saved" | "sample" = "sample";
 
       try {
         await initInvestmentHoldingStorage();
         const savedInvestmentHoldings = await getInvestmentHoldings();
         investmentHoldings = savedInvestmentHoldings.length > 0 ? savedInvestmentHoldings : sampleInvestmentHoldings;
+        investmentDataSource = savedInvestmentHoldings.length > 0 ? "saved" : "sample";
       } catch {
         investmentHoldings = sampleInvestmentHoldings;
+        investmentDataSource = "sample";
       }
 
       const payload = buildHomeAiAnalysisPayload(
@@ -120,7 +123,8 @@ export function AiAnalysisCard() {
         monthlyComparison,
         categoryMonthlyComparison,
         monthlyTrendReport,
-        investmentHoldings
+        investmentHoldings,
+        investmentDataSource
       );
       const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);

@@ -7,6 +7,7 @@ import { buildImprovementActionsSummary } from "../accounting/buildImprovementAc
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import { buildInvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
+import type { InvestmentAnalysisDataSource } from "../investment/buildInvestmentAnalysisPayload";
 import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
 import type { AccountingEntry } from "../types/accounting";
@@ -23,7 +24,8 @@ export function buildAccountingJson(
   monthlyComparison?: MonthlyComparisonSummary,
   categoryMonthlyComparison?: CategoryMonthlyComparisonSummary,
   monthlyTrendReport?: MonthlyTrendReport,
-  investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings
+  investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings,
+  investmentDataSource: InvestmentAnalysisDataSource = "sample"
 ) {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const breakdowns = buildAccountingBreakdowns(entries, month);
@@ -52,7 +54,11 @@ export function buildAccountingJson(
   });
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
-  const investment = buildInvestmentAnalysisPayload(investmentHoldings);
+  const investment = buildInvestmentAnalysisPayload({
+    dataSource: investmentDataSource,
+    holdings: investmentHoldings,
+    period: month
+  });
   const trendReport =
     monthlyTrendReport ??
     buildMonthlyTrendReport({

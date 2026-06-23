@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { InvestmentAllocationCard } from "../components/investment/InvestmentAllocationCard";
+import { InvestmentExportCard } from "../components/investment/InvestmentExportCard";
 import { InvestmentHoldingForm } from "../components/investment/InvestmentHoldingForm";
 import { InvestmentHoldingList } from "../components/investment/InvestmentHoldingList";
 import { InvestmentIndicatorMemoCard } from "../components/investment/InvestmentIndicatorMemoCard";
 import { InvestmentModeTabs } from "../components/investment/InvestmentModeTabs";
 import { InvestmentSummaryCards } from "../components/investment/InvestmentSummaryCards";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import {
   buildInvestmentAllocation,
   calculateInvestmentSummary,
@@ -25,6 +27,7 @@ import {
 import type { InvestmentHolding, InvestmentHoldingMode } from "../lib/types/investment";
 
 export default function InvestmentScreen() {
+  const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
   const [holdings, setHoldings] = useState<InvestmentHolding[]>(sampleInvestmentHoldings);
   const [mode, setMode] = useState<InvestmentHoldingMode>("actual");
   const [editingHolding, setEditingHolding] = useState<InvestmentHolding | null>(null);
@@ -189,6 +192,13 @@ export default function InvestmentScreen() {
           <InvestmentIndicatorMemoCard />
 
           <InvestmentAllocationCard allocation={allocation} />
+
+          <InvestmentExportCard
+            dataSource={isFallback ? "sample" : "saved"}
+            holdings={holdings}
+            month={selectedMonth}
+            monthLabel={selectedMonthLabel}
+          />
         </View>
       </ScrollView>
       <BottomTabBar activeTab="investment" />

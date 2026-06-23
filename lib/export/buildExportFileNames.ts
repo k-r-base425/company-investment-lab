@@ -11,3 +11,15 @@ export function buildAccountingAnalysisJsonFileName(month: YearMonth) {
 export function buildAiAnalysisPromptTextFileName(month: YearMonth) {
   return `ai_analysis_prompt_${month}.txt`;
 }
+
+export function buildInvestmentHoldingsCsvFileName(month: YearMonth) {
+  return `investment_holdings_${month}.csv`;
+}
+
+export function buildInvestmentAnalysisJsonFileName(month: YearMonth) {
+  return `investment_analysis_${month}.json`;
+}
+
+export function buildInvestmentAiPromptTextFileName(month: YearMonth) {
+  return `investment_ai_prompt_${month}.txt`;
+}
