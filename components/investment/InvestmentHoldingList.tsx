@@ -6,9 +6,11 @@ import { InvestmentHoldingCard } from "./InvestmentHoldingCard";
 
 type InvestmentHoldingListProps = {
   holdings: InvestmentHolding[];
+  onDelete: (id: string) => void;
+  onEdit: (holding: InvestmentHolding) => void;
 };
 
-export function InvestmentHoldingList({ holdings }: InvestmentHoldingListProps) {
+export function InvestmentHoldingList({ holdings, onDelete, onEdit }: InvestmentHoldingListProps) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -19,7 +21,12 @@ export function InvestmentHoldingList({ holdings }: InvestmentHoldingListProps) 
       {holdings.length > 0 ? (
         <View style={styles.list}>
           {holdings.map((holding) => (
-            <InvestmentHoldingCard key={holding.id} holding={calculateInvestmentHolding(holding)} />
+            <InvestmentHoldingCard
+              key={holding.id}
+              holding={calculateInvestmentHolding(holding)}
+              onDelete={onDelete}
+              onEdit={onEdit}
+            />
           ))}
         </View>
       ) : (

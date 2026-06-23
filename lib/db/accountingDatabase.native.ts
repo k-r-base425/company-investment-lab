@@ -11,7 +11,10 @@ import {
   createImprovementActionsActionKeyIndexSql,
   createImprovementActionsPeriodIndexSql,
   createImprovementActionsStatusIndexSql,
-  createImprovementActionsTableSql
+  createImprovementActionsTableSql,
+  createInvestmentHoldingsAssetTypeIndexSql,
+  createInvestmentHoldingsPositionTypeIndexSql,
+  createInvestmentHoldingsTableSql
 } from "./accountingSchema";
 
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -36,4 +39,7 @@ export async function initAccountingDatabase() {
   await database.execAsync(createImprovementActionsPeriodIndexSql);
   await database.execAsync(createImprovementActionsStatusIndexSql);
   await database.execAsync(createImprovementActionsActionKeyIndexSql);
+  await database.execAsync(createInvestmentHoldingsTableSql);
+  await database.execAsync(createInvestmentHoldingsAssetTypeIndexSql);
+  await database.execAsync(createInvestmentHoldingsPositionTypeIndexSql);
 }

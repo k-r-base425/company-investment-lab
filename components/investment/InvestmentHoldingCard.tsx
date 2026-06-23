@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { investmentAssetTypeLabels } from "../../lib/investment/calculateInvestment";
 import type { InvestmentHoldingCalculated } from "../../lib/types/investment";
@@ -12,9 +12,11 @@ import {
 
 type InvestmentHoldingCardProps = {
   holding: InvestmentHoldingCalculated;
+  onEdit: (holding: InvestmentHoldingCalculated) => void;
+  onDelete: (id: string) => void;
 };
 
-export function InvestmentHoldingCard({ holding }: InvestmentHoldingCardProps) {
+export function InvestmentHoldingCard({ holding, onDelete, onEdit }: InvestmentHoldingCardProps) {
   const gainPositive = holding.gainLoss >= 0;
 
   return (
@@ -54,6 +56,23 @@ export function InvestmentHoldingCard({ holding }: InvestmentHoldingCardProps) {
           <Text style={styles.memoText}>{holding.memo}</Text>
         </View>
       ) : null}
+
+      <View style={styles.actionRow}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onEdit(holding)}
+          style={({ pressed }) => [styles.actionButton, styles.editButton, pressed && styles.actionButtonPressed]}
+        >
+          <Text style={[styles.actionText, styles.editText]}>編集</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onDelete(holding.id)}
+          style={({ pressed }) => [styles.actionButton, styles.deleteButton, pressed && styles.actionButtonPressed]}
+        >
+          <Text style={[styles.actionText, styles.deleteText]}>削除</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -206,5 +225,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     lineHeight: 18
+  },
+  actionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12
+  },
+  actionButton: {
+    alignItems: "center",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexGrow: 1,
+    minHeight: 40,
+    minWidth: 104,
+    paddingHorizontal: 12,
+    paddingVertical: 10
+  },
+  editButton: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE"
+  },
+  deleteButton: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA"
+  },
+  actionButtonPressed: {
+    opacity: 0.78
+  },
+  actionText: {
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 18
+  },
+  editText: {
+    color: "#1D4ED8"
+  },
+  deleteText: {
+    color: "#B91C1C"
   }
 });

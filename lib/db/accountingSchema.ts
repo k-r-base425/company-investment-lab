@@ -94,3 +94,33 @@ export const createImprovementActionsActionKeyIndexSql = `
 CREATE INDEX IF NOT EXISTS idx_improvement_actions_action_key
 ON improvement_actions(action_key);
 `;
+
+export const createInvestmentHoldingsTableSql = `
+CREATE TABLE IF NOT EXISTS investment_holdings (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  ticker TEXT,
+  asset_type TEXT NOT NULL,
+  position_type TEXT NOT NULL,
+  quantity REAL NOT NULL,
+  average_cost REAL NOT NULL,
+  current_price REAL NOT NULL,
+  dividend_yield REAL,
+  per REAL,
+  pbr REAL,
+  roe REAL,
+  memo TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+`;
+
+export const createInvestmentHoldingsAssetTypeIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_investment_holdings_asset_type
+ON investment_holdings(asset_type);
+`;
+
+export const createInvestmentHoldingsPositionTypeIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_investment_holdings_position_type
+ON investment_holdings(position_type);
+`;

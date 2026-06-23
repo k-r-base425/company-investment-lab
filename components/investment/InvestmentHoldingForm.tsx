@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { investmentAssetTypeLabels } from "../../lib/investment/calculateInvestment";
 import type { InvestmentAssetType, InvestmentHolding, InvestmentPositionType } from "../../lib/types/investment";
 
 type InvestmentHoldingFormProps = {
-  onAdd: (holding: InvestmentHolding) => void;
+  onAdd: (holding: InvestmentHolding) => boolean | Promise<boolean>;
+  editingHolding?: InvestmentHolding | null;
+  onCancelEdit?: () => void;
+  submitLabel?: string;
 };
 
 const assetTypes: InvestmentAssetType[] = ["japanese_stock", "us_stock", "mutual_fund", "etf", "cash"];
@@ -29,16 +32,46 @@ const initialForm = {
   memo: ""
 };
 
-export function InvestmentHoldingForm({ onAdd }: InvestmentHoldingFormProps) {
+export function InvestmentHoldingForm({
+  onAdd,
+  editingHolding,
+  onCancelEdit,
+  submitLabel = "銘柄を追加"
+}: InvestmentHoldingFormProps) {
   const [form, setForm] = useState(initialForm);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    if (!editingHolding) {
+      setForm(initialForm);
+      setErrorMessage("");
+      return;
+    }
+
+    setForm({
+      name: editingHolding.name,
+      ticker: editingHolding.ticker ?? "",
+      assetType: editingHolding.assetType,
+      positionType: editingHolding.positionType,
+      quantity: String(editingHolding.quantity),
+      averageCost: String(editingHolding.averageCost),
+      currentPrice: String(editingHolding.currentPrice),
+      dividendYield: formatOptionalNumberForInput(editingHolding.dividendYield),
+      per: formatOptionalNumberForInput(editingHolding.per),
+      pbr: formatOptionalNumberForInput(editingHolding.pbr),
+      roe: formatOptionalNumberForInput(editingHolding.roe),
+      memo: editingHolding.memo ?? ""
+    });
+    setErrorMessage("");
+    setSuccessMessage("");
+  }, [editingHolding]);
 
   const updateField = (key: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -85,8 +118,8 @@ export function InvestmentHoldingForm({ onAdd }: InvestmentHoldingFormProps) {
     }
 
     const now = new Date().toISOString();
-    onAdd({
-      id: `investment-${Date.now()}`,
+    const success = await onAdd({
+      id: editingHolding?.id ?? `investment-${Date.now()}`,
       name,
       ticker: form.ticker.trim() || undefined,
       assetType: form.assetType,
@@ -99,18 +132,23 @@ export function InvestmentHoldingForm({ onAdd }: InvestmentHoldingFormProps) {
       pbr: optionalNumbers.pbr === "invalid" ? undefined : optionalNumbers.pbr,
       roe: optionalNumbers.roe === "invalid" ? undefined : optionalNumbers.roe,
       memo: form.memo.trim() || undefined,
-      createdAt: now,
+      createdAt: editingHolding?.createdAt ?? now,
       updatedAt: now
     });
+
+    if (!success) {
+      return;
+    }
+
     setForm(initialForm);
-    setSuccessMessage("銘柄を追加しました");
+    setSuccessMessage(editingHolding ? "銘柄を更新しました" : "銘柄を追加しました");
   };
 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>銘柄追加フォーム</Text>
-        <Text style={styles.subtitle}>画面内のサンプル状態に追加します。</Text>
+        <Text style={styles.title}>{editingHolding ? "銘柄を編集中" : "銘柄追加フォーム"}</Text>
+        <Text style={styles.subtitle}>入力した銘柄はローカル保存されます。</Text>
       </View>
 
       {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
@@ -169,10 +207,29 @@ export function InvestmentHoldingForm({ onAdd }: InvestmentHoldingFormProps) {
       />
 
       <Pressable accessibilityRole="button" onPress={handleSubmit} style={({ pressed }) => [styles.submitButton, pressed && styles.submitButtonPressed]}>
-        <Text style={styles.submitText}>銘柄を追加</Text>
+        <Text style={styles.submitText}>{submitLabel}</Text>
       </Pressable>
+
+      {editingHolding && onCancelEdit ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setForm(initialForm);
+            setErrorMessage("");
+            setSuccessMessage("");
+            onCancelEdit();
+          }}
+          style={({ pressed }) => [styles.cancelButton, pressed && styles.submitButtonPressed]}
+        >
+          <Text style={styles.cancelText}>編集をキャンセル</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
+}
+
+function formatOptionalNumberForInput(value?: number) {
+  return typeof value === "number" ? String(value) : "";
 }
 
 function parseOptionalNumber(value: string): number | undefined | "invalid" {
@@ -355,5 +412,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "900",
     lineHeight: 20
+  },
+  cancelButton: {
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 10,
+    minHeight: 44,
+    paddingHorizontal: 14,
+    paddingVertical: 11
+  },
+  cancelText: {
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 19
   }
 });
