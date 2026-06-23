@@ -95,7 +95,7 @@ export function buildHomeKpisFromAccounting({
         { label: "今月", value: `${householdCount}件`, tone: "neutral" }
       ])
     },
-    ...getSampleKpis(["total-assets", "cash-ratio", "investment-gain", "learning-progress"])
+    ...getSampleKpis(["learning-progress"])
   ];
 }
 
@@ -105,7 +105,7 @@ function getSampleKpis(ids: string[]) {
     .filter((kpi): kpi is HomeKpi => Boolean(kpi))
     .map((kpi) => ({
       ...kpi,
-      subtitle: kpi.id === "learning-progress" ? "サンプル / Lv.4" : "投資データ未連動",
+      subtitle: "サンプル / Lv.4",
       trends: kpi.trends?.map((trend) => ({ ...trend, label: trend.label === "前月比" ? "サンプル" : trend.label }))
     }));
 }

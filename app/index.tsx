@@ -7,6 +7,7 @@ import { AssetAllocationCard } from "../components/home/AssetAllocationCard";
 import { MonthSelector } from "../components/common/MonthSelector";
 import { HomeDataStatus } from "../components/home/HomeDataStatus";
 import { HomeImprovementActionsCard } from "../components/home/HomeImprovementActionsCard";
+import { HomeInvestmentDataStatus } from "../components/home/HomeInvestmentDataStatus";
 import { HomeKpiGrid } from "../components/home/HomeKpiGrid";
 import { HomeMonthlyChartCard } from "../components/home/HomeMonthlyChartCard";
 import { TodayLearningCard } from "../components/home/TodayLearningCard";
@@ -15,16 +16,21 @@ import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 import { buildMonthlyComparisonSummary } from "../lib/accounting/buildMonthlyComparisonSummary";
 import { calculateMonthlyAccountingSummary } from "../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../lib/accounting/sampleAccountingEntries";
+import { buildHomeAssetAllocationFromInvestment } from "../lib/home/buildHomeAssetAllocationFromInvestment";
 import { buildHomeKpisFromAccounting } from "../lib/home/buildHomeKpisFromAccounting";
-import { sampleAssetAllocation } from "../lib/home/sampleAssetAllocation";
+import { buildHomeKpisFromInvestment } from "../lib/home/buildHomeKpisFromInvestment";
 import { sampleLearningTopics } from "../lib/home/sampleLearningTopics";
+import { sampleInvestmentHoldings } from "../lib/investment/sampleInvestmentHoldings";
 import { defaultSelectedMonth, getPreviousMonth } from "../lib/month/monthUtils";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../lib/storage/improvementActionRepository";
+import { getInvestmentHoldings, initInvestmentHoldingStorage } from "../lib/storage/investmentHoldingRepository";
 import type { AccountingEntry } from "../lib/types/accounting";
 import type { ImprovementAction } from "../lib/types/improvementAction";
+import type { InvestmentHolding } from "../lib/types/investment";
 
 const accountingLoadErrorMessage = "会計データの読み込みに失敗しました。";
+const investmentLoadErrorMessage = "投資データの読み込みに失敗しました。";
 
 export default function HomeScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
@@ -37,6 +43,11 @@ export default function HomeScreen() {
   const [improvementActions, setImprovementActions] = useState<ImprovementAction[]>([]);
   const [isActionLoading, setIsActionLoading] = useState(true);
   const [actionErrorMessage, setActionErrorMessage] = useState("");
+  const [investmentHoldings, setInvestmentHoldings] = useState<InvestmentHolding[]>(sampleInvestmentHoldings);
+  const [savedInvestmentHoldingCount, setSavedInvestmentHoldingCount] = useState(0);
+  const [isInvestmentFallback, setIsInvestmentFallback] = useState(true);
+  const [isInvestmentLoading, setIsInvestmentLoading] = useState(true);
+  const [investmentErrorMessage, setInvestmentErrorMessage] = useState("");
   const previousMonth = useMemo(() => getPreviousMonth(selectedMonth), [selectedMonth]);
   const monthlyComparison = useMemo(() => {
     const currentSummary = calculateMonthlyAccountingSummary(accountingEntries, selectedMonth);
@@ -52,9 +63,26 @@ export default function HomeScreen() {
       previousSummary
     });
   }, [accountingEntries, previousAccountingEntries, previousMonth, selectedMonth]);
-  const kpis = useMemo(
+  const accountingKpis = useMemo(
     () => buildHomeKpisFromAccounting({ entries: accountingEntries, month: selectedMonth, monthlyComparison }),
     [accountingEntries, monthlyComparison, selectedMonth]
+  );
+  const investmentKpis = useMemo(
+    () => buildHomeKpisFromInvestment({ holdings: investmentHoldings, isFallback: isInvestmentFallback }),
+    [investmentHoldings, isInvestmentFallback]
+  );
+  const kpis = useMemo(() => {
+    const learningKpis = accountingKpis.filter((kpi) => kpi.id === "learning-progress");
+    const mainAccountingKpis = accountingKpis.filter((kpi) => kpi.id !== "learning-progress");
+
+    return [...mainAccountingKpis, ...investmentKpis, ...learningKpis];
+  }, [accountingKpis, investmentKpis]);
+  const investmentDataStatusLabel = isInvestmentFallback
+    ? "サンプル投資データ"
+    : `保存済み投資データ ${savedInvestmentHoldingCount}件`;
+  const assetAllocationSummary = useMemo(
+    () => buildHomeAssetAllocationFromInvestment(investmentHoldings, investmentDataStatusLabel),
+    [investmentDataStatusLabel, investmentHoldings]
   );
   const hasNoData = !isFallback && savedEntryCount === 0;
 
@@ -116,11 +144,39 @@ export default function HomeScreen() {
     }
   }, [selectedMonth]);
 
+  const loadInvestmentHoldings = useCallback(async () => {
+    try {
+      setIsInvestmentLoading(true);
+      setInvestmentErrorMessage("");
+      await initInvestmentHoldingStorage();
+      const savedHoldings = await getInvestmentHoldings();
+
+      if (savedHoldings.length > 0) {
+        setInvestmentHoldings(savedHoldings);
+        setSavedInvestmentHoldingCount(savedHoldings.length);
+        setIsInvestmentFallback(false);
+        return;
+      }
+
+      setInvestmentHoldings(sampleInvestmentHoldings);
+      setSavedInvestmentHoldingCount(0);
+      setIsInvestmentFallback(true);
+    } catch {
+      setInvestmentHoldings(sampleInvestmentHoldings);
+      setSavedInvestmentHoldingCount(0);
+      setIsInvestmentFallback(true);
+      setInvestmentErrorMessage(investmentLoadErrorMessage);
+    } finally {
+      setIsInvestmentLoading(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadAccountingEntries();
       loadImprovementActions();
-    }, [loadAccountingEntries, loadImprovementActions])
+      loadInvestmentHoldings();
+    }, [loadAccountingEntries, loadImprovementActions, loadInvestmentHoldings])
   );
 
   return (
@@ -147,6 +203,14 @@ export default function HomeScreen() {
             onRefresh={loadAccountingEntries}
           />
 
+          <HomeInvestmentDataStatus
+            errorMessage={investmentErrorMessage}
+            holdingCount={savedInvestmentHoldingCount}
+            isFallback={isInvestmentFallback}
+            isLoading={isInvestmentLoading}
+            onRefresh={loadInvestmentHoldings}
+          />
+
           <HomeKpiGrid kpis={kpis} />
 
           <HomeMonthlyChartCard
@@ -158,7 +222,7 @@ export default function HomeScreen() {
             monthLabel={selectedMonthLabel}
           />
 
-          <AssetAllocationCard summary={sampleAssetAllocation} />
+          <AssetAllocationCard summary={assetAllocationSummary} />
 
           <TodayLearningCard topics={sampleLearningTopics} />
 

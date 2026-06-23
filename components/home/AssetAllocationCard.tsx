@@ -8,12 +8,14 @@ type AssetAllocationCardProps = {
 };
 
 export function AssetAllocationCard({ summary }: AssetAllocationCardProps) {
+  const memo = buildCashRatioMemo(summary.cashRatio);
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.headerText}>
           <Text style={styles.title}>資産配分</Text>
-          <Text style={styles.subtitle}>現金・投資・事業資金のバランス</Text>
+          <Text style={styles.subtitle}>保存済み投資データから計算</Text>
         </View>
       </View>
 
@@ -34,9 +36,7 @@ export function AssetAllocationCard({ summary }: AssetAllocationCardProps) {
       </View>
 
       <View style={styles.memoBox}>
-        <Text style={styles.memoText}>
-          現金比率は28.6%です。短期の安全余力を確保しつつ、投資余力も残せています。
-        </Text>
+        <Text style={styles.memoText}>{memo}</Text>
       </View>
     </View>
   );
@@ -82,6 +82,18 @@ function formatYen(value: number) {
 
 function formatPercent(value: number) {
   return `${value.toFixed(1)}%`;
+}
+
+function buildCashRatioMemo(cashRatio: number) {
+  if (cashRatio < 15) {
+    return `現金比率は${formatPercent(cashRatio)}です。現金比率が低めです。投資余力だけでなく、生活防衛資金も確認しましょう。`;
+  }
+
+  if (cashRatio > 45) {
+    return `現金比率は${formatPercent(cashRatio)}です。現金比率が高めです。投資待機資金としての意図があるか確認しましょう。`;
+  }
+
+  return `現金比率は${formatPercent(cashRatio)}です。投資余力と安全資金のバランスを確認しましょう。`;
 }
 
 const styles = StyleSheet.create({

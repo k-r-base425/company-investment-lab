@@ -1,5 +1,6 @@
 import type { AccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
 import type { ImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
+import type { InvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
 import type { AccountingInsight } from "./accountingInsight";
 import type { CategoryMonthlyComparisonSummary } from "./categoryMonthlyComparison";
 import type { ImprovementProgressReport } from "./improvementProgress";
@@ -35,17 +36,7 @@ export type AiAnalysisPayload = {
   improvementActions: ImprovementActionsSummary;
   improvementProgress: ImprovementProgressReport;
   monthlyTrendReport?: MonthlyTrendReport;
-  investment: {
-    totalAssets: number;
-    cashRatio: number;
-    unrealizedGain: number;
-    assets: {
-      name: string;
-      assetType: string;
-      marketValue: number;
-      ratio: number;
-    }[];
-  };
+  investment: InvestmentAnalysisPayload;
   monthlyChart: {
     month: string;
     metric: MonthlyChartMetric;

@@ -6,12 +6,15 @@ import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
+import { buildInvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
+import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
+import type { InvestmentHolding } from "../types/investment";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 import type { MonthlyTrendReport } from "../types/monthlyTrendReport";
 
@@ -21,7 +24,8 @@ export function buildHomeAiAnalysisPayload(
   actions: ImprovementAction[] = [],
   monthlyComparison?: MonthlyComparisonSummary,
   categoryMonthlyComparison?: CategoryMonthlyComparisonSummary,
-  monthlyTrendReport?: MonthlyTrendReport
+  monthlyTrendReport?: MonthlyTrendReport,
+  investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings
 ): AiAnalysisPayload {
   const previousMonth = getPreviousMonth(month);
   const comparison =
@@ -46,6 +50,7 @@ export function buildHomeAiAnalysisPayload(
   const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
+  const investment = buildInvestmentAnalysisPayload(investmentHoldings);
   const trendReport =
     monthlyTrendReport ??
     buildMonthlyTrendReport({
@@ -81,6 +86,7 @@ export function buildHomeAiAnalysisPayload(
     monthlyComparison: comparison,
     improvementActions,
     improvementProgress,
+    investment,
     monthlyTrendReport: trendReport,
     monthlyChart: {
       month,

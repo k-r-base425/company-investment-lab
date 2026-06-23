@@ -6,10 +6,13 @@ import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
+import { buildInvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
+import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
 import type { AccountingEntry } from "../types/accounting";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
+import type { InvestmentHolding } from "../types/investment";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 import type { MonthlyTrendReport } from "../types/monthlyTrendReport";
 
@@ -19,7 +22,8 @@ export function buildAccountingJson(
   actions: ImprovementAction[] = [],
   monthlyComparison?: MonthlyComparisonSummary,
   categoryMonthlyComparison?: CategoryMonthlyComparisonSummary,
-  monthlyTrendReport?: MonthlyTrendReport
+  monthlyTrendReport?: MonthlyTrendReport,
+  investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings
 ) {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const breakdowns = buildAccountingBreakdowns(entries, month);
@@ -48,6 +52,7 @@ export function buildAccountingJson(
   });
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
+  const investment = buildInvestmentAnalysisPayload(investmentHoldings);
   const trendReport =
     monthlyTrendReport ??
     buildMonthlyTrendReport({
@@ -71,6 +76,7 @@ export function buildAccountingJson(
     monthlyComparison: comparison,
     improvementActions,
     improvementProgress,
+    investment,
     monthlyTrendReport: trendReport,
     breakdowns,
     entries: monthlyEntries

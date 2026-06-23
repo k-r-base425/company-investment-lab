@@ -3,6 +3,8 @@ import { buildImprovementActionsSummary } from "../accounting/buildImprovementAc
 import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
+import { buildInvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
+import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { sampleAccountingEntries } from "../accounting/sampleAccountingEntries";
 import type { AiAnalysisPayload } from "../types/ai";
 
@@ -23,6 +25,7 @@ const sampleMonthlyTrendReport = buildMonthlyTrendReport({
   months: ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
   selectedMonth: "2026-06"
 });
+const sampleInvestmentAnalysis = buildInvestmentAnalysisPayload(sampleInvestmentHoldings);
 
 export const sampleMonthlyChartDays = sampleMonthlyChartData.days;
 
@@ -55,43 +58,7 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
   improvementActions: sampleImprovementActions,
   improvementProgress: sampleImprovementProgress,
   monthlyTrendReport: sampleMonthlyTrendReport,
-  investment: {
-    totalAssets: 14850000,
-    cashRatio: 0.286,
-    unrealizedGain: 1250000,
-    assets: [
-      {
-        name: "現金",
-        assetType: "cash",
-        marketValue: 4250000,
-        ratio: 0.286
-      },
-      {
-        name: "日本株",
-        assetType: "japanese_stock",
-        marketValue: 3610000,
-        ratio: 0.243
-      },
-      {
-        name: "投資信託",
-        assetType: "mutual_fund",
-        marketValue: 3090000,
-        ratio: 0.208
-      },
-      {
-        name: "特定口座",
-        assetType: "taxable_account",
-        marketValue: 2180000,
-        ratio: 0.147
-      },
-      {
-        name: "事業資金",
-        assetType: "business_cash",
-        marketValue: 1720000,
-        ratio: 0.116
-      }
-    ]
-  },
+  investment: sampleInvestmentAnalysis,
   monthlyChart: {
     month: "2026-06",
     metric: "profit",

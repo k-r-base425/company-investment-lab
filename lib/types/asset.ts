@@ -1,7 +1,9 @@
 export type AssetAllocationType =
   | "cash"
   | "japanese_stock"
+  | "us_stock"
   | "mutual_fund"
+  | "etf"
   | "taxable_account"
   | "business_cash";
 

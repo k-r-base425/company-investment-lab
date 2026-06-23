@@ -11,10 +11,12 @@ import { buildMonthlyTrendReport } from "../../lib/accounting/buildMonthlyTrendR
 import { buildMonthlyComparisonSummary } from "../../lib/accounting/buildMonthlyComparisonSummary";
 import { calculateMonthlyAccountingSummary } from "../../lib/accounting/calculateAccountingSummary";
 import { sampleAccountingEntries } from "../../lib/accounting/sampleAccountingEntries";
+import { sampleInvestmentHoldings } from "../../lib/investment/sampleInvestmentHoldings";
 import { defaultSelectedMonth, getPreviousMonth, getPreviousMonthsIncludingSelected } from "../../lib/month/monthUtils";
 import { initAiAnalysisRunStorage, insertAiAnalysisRun } from "../../lib/storage/aiAnalysisRunRepository";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../../lib/storage/improvementActionRepository";
+import { getInvestmentHoldings, initInvestmentHoldingStorage } from "../../lib/storage/investmentHoldingRepository";
 import type { ImprovementAction } from "../../lib/types/improvementAction";
 
 type CopyStatus = "idle" | "success" | "historyError" | "error";
@@ -101,13 +103,24 @@ export function AiAnalysisCard() {
         improvementActions = [];
       }
 
+      let investmentHoldings = sampleInvestmentHoldings;
+
+      try {
+        await initInvestmentHoldingStorage();
+        const savedInvestmentHoldings = await getInvestmentHoldings();
+        investmentHoldings = savedInvestmentHoldings.length > 0 ? savedInvestmentHoldings : sampleInvestmentHoldings;
+      } catch {
+        investmentHoldings = sampleInvestmentHoldings;
+      }
+
       const payload = buildHomeAiAnalysisPayload(
         entries,
         selectedMonth,
         improvementActions,
         monthlyComparison,
         categoryMonthlyComparison,
-        monthlyTrendReport
+        monthlyTrendReport,
+        investmentHoldings
       );
       const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);
