@@ -2,9 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { MonthSelector } from "../components/common/MonthSelector";
+import { CollapsibleSection } from "../components/common/CollapsibleSection";
 import { AccountingEntryForm } from "../components/accounting/AccountingEntryForm";
 import { AccountingAnalysisSection } from "../components/accounting/AccountingAnalysisSection";
+import { AccountingExportSection } from "../components/accounting/AccountingExportSection";
 import { AccountingInsightsSection } from "../components/accounting/AccountingInsightsSection";
+import { AccountingQuickNav } from "../components/accounting/AccountingQuickNav";
+import type { AccountingSectionKey } from "../components/accounting/AccountingQuickNav";
 import { AccountingSummaryCards } from "../components/accounting/AccountingSummaryCards";
 import { AccountingTypeTabs } from "../components/accounting/AccountingTypeTabs";
 import { CategoryMonthlyComparisonSection } from "../components/accounting/CategoryMonthlyComparisonSection";
@@ -49,6 +53,12 @@ import type { ImprovementAction } from "../lib/types/improvementAction";
 
 export default function AccountingScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
+  const [openSections, setOpenSections] = useState<Record<AccountingSectionKey, boolean>>({
+    overview: true,
+    analysis: true,
+    input: true,
+    export: false
+  });
   const [activeType, setActiveType] = useState<AccountingEntryType>("revenue");
   const [entries, setEntries] = useState<AccountingEntry[]>([]);
   const [previousEntries, setPreviousEntries] = useState<AccountingEntry[]>([]);
@@ -92,6 +102,12 @@ export default function AccountingScreen() {
     selectedMonth
   });
   const defaultEntryDate = `${selectedMonth}-05`;
+  const sectionItems = [
+    { key: "overview" as const, label: "概況", isOpen: openSections.overview },
+    { key: "analysis" as const, label: "分析", isOpen: openSections.analysis },
+    { key: "input" as const, label: "入力", isOpen: openSections.input },
+    { key: "export" as const, label: "出力", isOpen: openSections.export }
+  ];
 
   useEffect(() => {
     let canceled = false;
@@ -271,6 +287,20 @@ export default function AccountingScreen() {
     setEditingEntry(null);
   };
 
+  const handleToggleSection = (key: AccountingSectionKey) => {
+    setOpenSections((current) => ({
+      ...current,
+      [key]: !current[key]
+    }));
+  };
+
+  const handleQuickNavSelect = (key: AccountingSectionKey) => {
+    setOpenSections((current) => ({
+      ...current,
+      [key]: true
+    }));
+  };
+
   const handleCreateImprovementActions = async () => {
     try {
       setActionError("");
@@ -339,94 +369,130 @@ export default function AccountingScreen() {
 
           <MonthSelector />
 
-          <AccountingSummaryCards summary={monthlySummary} />
+          <AccountingQuickNav items={sectionItems} onSelect={handleQuickNavSelect} />
 
-          <MonthlyComparisonCard
-            comparison={monthlyComparison}
-            currentMonthLabel={selectedMonthLabel}
-            previousMonthLabel={previousMonthLabel}
-          />
+          <CollapsibleSection
+            badgeText="主要KPI"
+            isOpen={openSections.overview}
+            onToggle={() => handleToggleSection("overview")}
+            subtitle="選択月の主要な数字を確認します。"
+            title="概況"
+          >
+            <AccountingSummaryCards summary={monthlySummary} />
 
-          <MonthlyTrendSection errorMessage={monthlyTrendError} report={monthlyTrendReport} />
-
-          <CategoryMonthlyComparisonSection
-            comparison={categoryMonthlyComparison}
-            currentMonthLabel={selectedMonthLabel}
-            errorMessage={isFallbackData ? storageError : ""}
-            isFallback={isFallbackData}
-            isLoading={isLoading}
-            previousMonthLabel={previousMonthLabel}
-          />
-
-          <AccountingInsightsSection
-            entries={entries}
-            errorMessage={isFallbackData ? storageError : ""}
-            isFallback={isFallbackData}
-            isLoading={isLoading}
-            month={selectedMonth}
-            monthLabel={selectedMonthLabel}
-            categoryMonthlyComparison={categoryMonthlyComparison}
-            monthlyComparison={monthlyComparison}
-          />
-
-          <ImprovementActionsSection
-            actionMessage={actionMessage}
-            actions={improvementActions}
-            errorMessage={actionError}
-            isFallback={isFallbackData}
-            isLoading={isActionLoading}
-            monthLabel={selectedMonthLabel}
-            onCreateFromInsights={handleCreateImprovementActions}
-            onDelete={handleDeleteImprovementAction}
-            onToggleStatus={handleToggleImprovementActionStatus}
-            period={selectedMonth}
-          />
-
-          <ImprovementProgressSection
-            actions={improvementActions}
-            entries={entries}
-            isLoading={isLoading || isActionLoading}
-            monthLabel={selectedMonthLabel}
-            period={selectedMonth}
-          />
-
-          <AccountingAnalysisSection
-            entries={entries}
-            errorMessage={isFallbackData ? storageError : ""}
-            isFallback={isFallbackData}
-            isLoading={isLoading}
-            month={selectedMonth}
-            monthLabel={selectedMonthLabel}
-          />
-
-          {isLoading ? <Text style={styles.statusMessage}>保存済みデータを読み込んでいます...</Text> : null}
-
-          {storageError ? <Text style={styles.errorMessage}>{storageError}</Text> : null}
-
-          <AccountingTypeTabs activeType={activeType} onChange={handleTypeChange} />
-
-          {activeType === "journal" ? (
-            <JournalEntryForm
-              defaultDate={defaultEntryDate}
-              editingEntry={editingEntry?.type === "journal" ? editingEntry : null}
-              onCancelEdit={handleCancelEdit}
-              onSubmit={handleSubmitEntry}
-              submitLabel={editingEntry?.type === "journal" ? "入力を更新" : "入力を追加"}
+            <MonthlyComparisonCard
+              comparison={monthlyComparison}
+              currentMonthLabel={selectedMonthLabel}
+              previousMonthLabel={previousMonthLabel}
             />
-          ) : (
-            <AccountingEntryForm
-              defaultDate={defaultEntryDate}
-              editingEntry={editingEntry?.type === activeType ? editingEntry : null}
-              onCancelEdit={handleCancelEdit}
-              onSubmit={handleSubmitEntry}
-              submitLabel={editingEntry?.type === activeType ? "入力を更新" : "入力を追加"}
-              type={activeType}
+
+            <MonthlyTrendSection errorMessage={monthlyTrendError} report={monthlyTrendReport} />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            badgeText="5項目"
+            isOpen={openSections.analysis}
+            onToggle={() => handleToggleSection("analysis")}
+            subtitle="カテゴリ・改善コメント・改善進捗を確認します。"
+            title="分析"
+          >
+            <CategoryMonthlyComparisonSection
+              comparison={categoryMonthlyComparison}
+              currentMonthLabel={selectedMonthLabel}
+              errorMessage={isFallbackData ? storageError : ""}
+              isFallback={isFallbackData}
+              isLoading={isLoading}
+              previousMonthLabel={previousMonthLabel}
             />
-          )}
 
-          {successMessage ? <Text style={styles.successMessage}>{successMessage}</Text> : null}
+            <AccountingInsightsSection
+              entries={entries}
+              errorMessage={isFallbackData ? storageError : ""}
+              isFallback={isFallbackData}
+              isLoading={isLoading}
+              month={selectedMonth}
+              monthLabel={selectedMonthLabel}
+              categoryMonthlyComparison={categoryMonthlyComparison}
+              monthlyComparison={monthlyComparison}
+            />
 
-          <RecentEntriesList entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />
+            <ImprovementActionsSection
+              actionMessage={actionMessage}
+              actions={improvementActions}
+              errorMessage={actionError}
+              isFallback={isFallbackData}
+              isLoading={isActionLoading}
+              monthLabel={selectedMonthLabel}
+              onCreateFromInsights={handleCreateImprovementActions}
+              onDelete={handleDeleteImprovementAction}
+              onToggleStatus={handleToggleImprovementActionStatus}
+              period={selectedMonth}
+            />
+
+            <ImprovementProgressSection
+              actions={improvementActions}
+              entries={entries}
+              isLoading={isLoading || isActionLoading}
+              monthLabel={selectedMonthLabel}
+              period={selectedMonth}
+            />
+
+            <AccountingAnalysisSection
+              entries={entries}
+              errorMessage={isFallbackData ? storageError : ""}
+              isFallback={isFallbackData}
+              isLoading={isLoading}
+              month={selectedMonth}
+              monthLabel={selectedMonthLabel}
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            badgeText="追加・編集"
+            isOpen={openSections.input}
+            onToggle={() => handleToggleSection("input")}
+            subtitle="売上・経費・家計・仕訳を追加します。"
+            title="入力"
+          >
+            {isLoading ? <Text style={styles.statusMessage}>保存済みデータを読み込んでいます...</Text> : null}
+
+            {storageError ? <Text style={styles.errorMessage}>{storageError}</Text> : null}
+
+            <AccountingTypeTabs activeType={activeType} onChange={handleTypeChange} />
+
+            {activeType === "journal" ? (
+              <JournalEntryForm
+                defaultDate={defaultEntryDate}
+                editingEntry={editingEntry?.type === "journal" ? editingEntry : null}
+                onCancelEdit={handleCancelEdit}
+                onSubmit={handleSubmitEntry}
+                submitLabel={editingEntry?.type === "journal" ? "入力を更新" : "入力を追加"}
+              />
+            ) : (
+              <AccountingEntryForm
+                defaultDate={defaultEntryDate}
+                editingEntry={editingEntry?.type === activeType ? editingEntry : null}
+                onCancelEdit={handleCancelEdit}
+                onSubmit={handleSubmitEntry}
+                submitLabel={editingEntry?.type === activeType ? "入力を更新" : "入力を追加"}
+                type={activeType}
+              />
+            )}
+
+            {successMessage ? <Text style={styles.successMessage}>{successMessage}</Text> : null}
+
+            <RecentEntriesList entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            badgeText="CSV/JSON"
+            isOpen={openSections.export}
+            onToggle={() => handleToggleSection("export")}
+            subtitle="CSV・JSON・AI分析プロンプトを出力します。"
+            title="出力"
+          >
+            <AccountingExportSection month={selectedMonth} monthLabel={selectedMonthLabel} />
+          </CollapsibleSection>
         </View>
       </ScrollView>
       <BottomTabBar activeTab="accounting" />
