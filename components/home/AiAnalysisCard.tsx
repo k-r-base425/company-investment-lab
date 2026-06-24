@@ -13,11 +13,16 @@ import { calculateMonthlyAccountingSummary } from "../../lib/accounting/calculat
 import { sampleAccountingEntries } from "../../lib/accounting/sampleAccountingEntries";
 import { sampleInvestmentHoldings } from "../../lib/investment/sampleInvestmentHoldings";
 import { defaultSelectedMonth, getPreviousMonth, getPreviousMonthsIncludingSelected } from "../../lib/month/monthUtils";
-import { initAiAnalysisRunStorage, insertAiAnalysisRun } from "../../lib/storage/aiAnalysisRunRepository";
+import {
+  getAiAnalysisRunsByPeriod,
+  initAiAnalysisRunStorage,
+  insertAiAnalysisRun
+} from "../../lib/storage/aiAnalysisRunRepository";
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../../lib/storage/improvementActionRepository";
 import { getInvestmentHoldings, initInvestmentHoldingStorage } from "../../lib/storage/investmentHoldingRepository";
 import type { ImprovementAction } from "../../lib/types/improvementAction";
+import type { AiAnalysisRun } from "../../lib/types/aiAnalysisRun";
 
 type CopyStatus = "idle" | "success" | "historyError" | "error";
 
@@ -105,6 +110,7 @@ export function AiAnalysisCard() {
 
       let investmentHoldings = sampleInvestmentHoldings;
       let investmentDataSource: "saved" | "sample" = "sample";
+      let aiAnalysisRuns: AiAnalysisRun[] = [];
 
       try {
         await initInvestmentHoldingStorage();
@@ -116,6 +122,13 @@ export function AiAnalysisCard() {
         investmentDataSource = "sample";
       }
 
+      try {
+        await initAiAnalysisRunStorage();
+        aiAnalysisRuns = await getAiAnalysisRunsByPeriod(selectedMonth);
+      } catch {
+        aiAnalysisRuns = [];
+      }
+
       const payload = buildHomeAiAnalysisPayload(
         entries,
         selectedMonth,
@@ -124,7 +137,8 @@ export function AiAnalysisCard() {
         categoryMonthlyComparison,
         monthlyTrendReport,
         investmentHoldings,
-        investmentDataSource
+        investmentDataSource,
+        aiAnalysisRuns
       );
       const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);

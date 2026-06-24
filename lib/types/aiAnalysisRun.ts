@@ -19,7 +19,7 @@ export type AiAnalysisRun = {
   responseText?: string;
   memo?: string;
   nextAction?: string;
-  source: "home_ai_card" | "accounting_export" | "manual";
+  source: "home_ai_card" | "accounting_export" | "investment_export" | "investment_tab" | "manual";
   createdAt: string;
   updatedAt: string;
 };

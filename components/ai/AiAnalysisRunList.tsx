@@ -20,9 +20,17 @@ const themeLabels: Record<AiAnalysisRun["theme"], string> = {
   monthly_review: "月次レビュー",
   business_profitability: "収益性",
   household_review: "家計",
-  investment_review: "投資",
+  investment_review: "投資分析",
   learning_review: "学習",
   custom: "カスタム"
+};
+
+const sourceLabels: Record<AiAnalysisRun["source"], string> = {
+  home_ai_card: "ホームAI",
+  accounting_export: "会計出力",
+  investment_export: "投資出力",
+  investment_tab: "投資タブ",
+  manual: "手動"
 };
 
 export function AiAnalysisRunList({ onCopyPrompt, onDelete, onSelect, runs, selectedRunId }: AiAnalysisRunListProps) {
@@ -56,8 +64,9 @@ export function AiAnalysisRunList({ onCopyPrompt, onDelete, onSelect, runs, sele
             </View>
 
             <View style={styles.detailGrid}>
-              <InfoChip label="テーマ" value={themeLabels[run.theme]} />
-              <InfoChip label="source" value={run.source} />
+              <InfoChip label="種別" value={isInvestmentRun(run) ? "投資分析" : "会計分析"} accent={isInvestmentRun(run)} />
+              <InfoChip label="テーマ" value={themeLabels[run.theme] ?? run.theme} />
+              <InfoChip label="source" value={sourceLabels[run.source] ?? run.source} />
               <InfoChip label="回答" value={run.responseText ? "回答保存済み" : "回答未保存"} />
             </View>
 
@@ -74,15 +83,16 @@ export function AiAnalysisRunList({ onCopyPrompt, onDelete, onSelect, runs, sele
 }
 
 type InfoChipProps = {
+  accent?: boolean;
   label: string;
   value: string;
 };
 
-function InfoChip({ label, value }: InfoChipProps) {
+function InfoChip({ accent, label, value }: InfoChipProps) {
   return (
-    <View style={styles.infoChip}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View style={[styles.infoChip, accent && styles.infoChipAccent]}>
+      <Text style={[styles.infoLabel, accent && styles.infoLabelAccent]}>{label}</Text>
+      <Text style={[styles.infoValue, accent && styles.infoValueAccent]}>{value}</Text>
     </View>
   );
 }
@@ -131,6 +141,10 @@ function formatDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit"
   });
+}
+
+function isInvestmentRun(run: AiAnalysisRun) {
+  return run.theme === "investment_review" || run.source === "investment_export" || run.source === "investment_tab";
 }
 
 const styles = StyleSheet.create({
@@ -226,16 +240,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 7
   },
+  infoChipAccent: {
+    backgroundColor: "#F5F3FF",
+    borderColor: "#C4B5FD"
+  },
   infoLabel: {
     color: "#94A3B8",
     fontSize: 10,
     fontWeight: "900"
+  },
+  infoLabelAccent: {
+    color: "#7C3AED"
   },
   infoValue: {
     color: "#334155",
     fontSize: 12,
     fontWeight: "900",
     marginTop: 2
+  },
+  infoValueAccent: {
+    color: "#5B21B6"
   },
   actionRow: {
     flexDirection: "row",

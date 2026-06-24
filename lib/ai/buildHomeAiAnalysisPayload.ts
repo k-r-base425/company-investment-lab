@@ -1,4 +1,5 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { buildAiAnalysisRunsSummary } from "./buildAiAnalysisRunsSummary";
 import { buildCategoryMonthlyComparison } from "../accounting/buildCategoryMonthlyComparison";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { buildMonthlyComparisonSummary } from "../accounting/buildMonthlyComparisonSummary";
@@ -13,6 +14,7 @@ import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/m
 import { sampleAiAnalysisPayload } from "./sampleAiAnalysisPayload";
 import type { AccountingEntry } from "../types/accounting";
 import type { AiAnalysisPayload } from "../types/ai";
+import type { AiAnalysisRun } from "../types/aiAnalysisRun";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { InvestmentHolding } from "../types/investment";
@@ -27,7 +29,8 @@ export function buildHomeAiAnalysisPayload(
   categoryMonthlyComparison?: CategoryMonthlyComparisonSummary,
   monthlyTrendReport?: MonthlyTrendReport,
   investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings,
-  investmentDataSource: InvestmentAnalysisDataSource = "sample"
+  investmentDataSource: InvestmentAnalysisDataSource = "sample",
+  aiAnalysisRuns: AiAnalysisRun[] = []
 ): AiAnalysisPayload {
   const previousMonth = getPreviousMonth(month);
   const comparison =
@@ -52,6 +55,7 @@ export function buildHomeAiAnalysisPayload(
   const monthlyChartData = buildMonthlyChartFromAccountingEntries({ entries, metric: "profit", month });
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
+  const aiAnalysisRunsSummary = buildAiAnalysisRunsSummary(aiAnalysisRuns);
   const investment = buildInvestmentAnalysisPayload({
     dataSource: investmentDataSource,
     holdings: investmentHoldings,
@@ -93,6 +97,7 @@ export function buildHomeAiAnalysisPayload(
     improvementActions,
     improvementProgress,
     investment,
+    aiAnalysisRunsSummary,
     monthlyTrendReport: trendReport,
     monthlyChart: {
       month,

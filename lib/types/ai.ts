@@ -1,4 +1,5 @@
 import type { AccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import type { AiAnalysisRunsSummary } from "../ai/buildAiAnalysisRunsSummary";
 import type { ImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import type { InvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
 import type { AccountingInsight } from "./accountingInsight";
@@ -37,6 +38,7 @@ export type AiAnalysisPayload = {
   improvementProgress: ImprovementProgressReport;
   monthlyTrendReport?: MonthlyTrendReport;
   investment: InvestmentAnalysisPayload;
+  aiAnalysisRunsSummary: AiAnalysisRunsSummary;
   monthlyChart: {
     month: string;
     metric: MonthlyChartMetric;

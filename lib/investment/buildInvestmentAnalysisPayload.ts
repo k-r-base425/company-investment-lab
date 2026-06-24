@@ -4,6 +4,7 @@ import {
   calculateInvestmentSummary,
   investmentAssetTypeLabels
 } from "./calculateInvestment";
+import { buildAiAnalysisRunsSummary, type AiAnalysisRunsSummary } from "../ai/buildAiAnalysisRunsSummary";
 import type { InvestmentAssetType, InvestmentHolding } from "../types/investment";
 
 export type InvestmentAnalysisDataSource = "saved" | "sample";
@@ -58,6 +59,7 @@ export type InvestmentAnalysisPayload = {
     roe: string;
     dividendYield: string;
   };
+  aiAnalysisRunsSummary: AiAnalysisRunsSummary;
   assumptions: string[];
   notes: string;
 };
@@ -67,13 +69,20 @@ type BuildInvestmentAnalysisPayloadParams = {
   period?: string;
   dataSource?: InvestmentAnalysisDataSource;
   exportedAt?: string;
+  aiAnalysisRunsSummary?: AiAnalysisRunsSummary;
 };
 
 export function buildInvestmentAnalysisPayload(
   paramsOrHoldings: BuildInvestmentAnalysisPayloadParams | InvestmentHolding[]
 ): InvestmentAnalysisPayload {
   const params = Array.isArray(paramsOrHoldings) ? { holdings: paramsOrHoldings } : paramsOrHoldings;
-  const { dataSource = "sample", exportedAt = new Date().toISOString(), holdings, period = "2026-06" } = params;
+  const {
+    aiAnalysisRunsSummary = buildAiAnalysisRunsSummary([]),
+    dataSource = "sample",
+    exportedAt = new Date().toISOString(),
+    holdings,
+    period = "2026-06"
+  } = params;
   const summary = calculateInvestmentSummary(holdings);
   const calculatedHoldings = holdings.map(calculateInvestmentHolding);
   const assets = calculatedHoldings.map((holding) => ({
@@ -111,6 +120,7 @@ export function buildInvestmentAnalysisPayload(
       roe: "自己資本を使ってどれだけ利益を出しているかを見る指標",
       dividendYield: "投資額に対して年間配当がどれくらいあるかを見る指標"
     },
+    aiAnalysisRunsSummary,
     assumptions: [
       "株価・指標は手入力またはサンプルです",
       "為替換算はまだ実装していません",

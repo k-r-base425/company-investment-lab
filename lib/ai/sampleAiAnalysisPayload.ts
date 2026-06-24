@@ -1,4 +1,5 @@
 import { buildAccountingAnalysisPayload } from "../accounting/buildAccountingAnalysisPayload";
+import { buildAiAnalysisRunsSummary } from "./buildAiAnalysisRunsSummary";
 import { buildImprovementActionsSummary } from "../accounting/buildImprovementActionsSummary";
 import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
@@ -26,6 +27,7 @@ const sampleMonthlyTrendReport = buildMonthlyTrendReport({
   selectedMonth: "2026-06"
 });
 const sampleInvestmentAnalysis = buildInvestmentAnalysisPayload(sampleInvestmentHoldings);
+const sampleAiAnalysisRunsSummary = buildAiAnalysisRunsSummary([]);
 
 export const sampleMonthlyChartDays = sampleMonthlyChartData.days;
 
@@ -59,6 +61,7 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
   improvementProgress: sampleImprovementProgress,
   monthlyTrendReport: sampleMonthlyTrendReport,
   investment: sampleInvestmentAnalysis,
+  aiAnalysisRunsSummary: sampleAiAnalysisRunsSummary,
   monthlyChart: {
     month: "2026-06",
     metric: "profit",

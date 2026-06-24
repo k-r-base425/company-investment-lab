@@ -1,4 +1,5 @@
 import { buildAccountingBreakdowns } from "../accounting/buildAccountingBreakdowns";
+import { buildAiAnalysisRunsSummary } from "../ai/buildAiAnalysisRunsSummary";
 import { buildAccountingInsights } from "../accounting/buildAccountingInsights";
 import { buildCategoryMonthlyComparison } from "../accounting/buildCategoryMonthlyComparison";
 import { buildMonthlyComparisonSummary } from "../accounting/buildMonthlyComparisonSummary";
@@ -11,6 +12,7 @@ import type { InvestmentAnalysisDataSource } from "../investment/buildInvestment
 import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
 import type { AccountingEntry } from "../types/accounting";
+import type { AiAnalysisRun } from "../types/aiAnalysisRun";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { InvestmentHolding } from "../types/investment";
@@ -25,7 +27,8 @@ export function buildAccountingJson(
   categoryMonthlyComparison?: CategoryMonthlyComparisonSummary,
   monthlyTrendReport?: MonthlyTrendReport,
   investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings,
-  investmentDataSource: InvestmentAnalysisDataSource = "sample"
+  investmentDataSource: InvestmentAnalysisDataSource = "sample",
+  aiAnalysisRuns: AiAnalysisRun[] = []
 ) {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const breakdowns = buildAccountingBreakdowns(entries, month);
@@ -59,6 +62,7 @@ export function buildAccountingJson(
     holdings: investmentHoldings,
     period: month
   });
+  const aiAnalysisRunsSummary = buildAiAnalysisRunsSummary(aiAnalysisRuns);
   const trendReport =
     monthlyTrendReport ??
     buildMonthlyTrendReport({
@@ -83,6 +87,7 @@ export function buildAccountingJson(
     improvementActions,
     improvementProgress,
     investment,
+    aiAnalysisRunsSummary,
     monthlyTrendReport: trendReport,
     breakdowns,
     entries: monthlyEntries

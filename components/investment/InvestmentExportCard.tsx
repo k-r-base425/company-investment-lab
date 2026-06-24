@@ -11,7 +11,14 @@ import {
 import { buildInvestmentJson } from "../../lib/export/buildInvestmentJson";
 import { buildInvestmentPromptText } from "../../lib/export/buildInvestmentPromptText";
 import { exportTextFile } from "../../lib/export/exportFiles";
+import { buildAiAnalysisRunsSummary } from "../../lib/ai/buildAiAnalysisRunsSummary";
+import { createInvestmentAiAnalysisRun } from "../../lib/ai/createInvestmentAiAnalysisRun";
 import type { InvestmentAnalysisDataSource } from "../../lib/investment/buildInvestmentAnalysisPayload";
+import {
+  getAiAnalysisRunsByPeriod,
+  initAiAnalysisRunStorage,
+  insertAiAnalysisRun
+} from "../../lib/storage/aiAnalysisRunRepository";
 import type { InvestmentHolding } from "../../lib/types/investment";
 import type { YearMonth } from "../../lib/types/month";
 
@@ -88,8 +95,10 @@ export function InvestmentExportCard({ dataSource, holdings, month, monthLabel }
 
   const handleExportJson = async () => {
     try {
+      const aiAnalysisRunsSummary = await loadAiAnalysisRunsSummary();
+
       await exportTextFile({
-        content: buildInvestmentJson({ dataSource, holdings, period: month }),
+        content: buildInvestmentJson({ aiAnalysisRunsSummary, dataSource, holdings, period: month }),
         fileName: buildInvestmentAnalysisJsonFileName(month),
         mimeType: "application/json;charset=utf-8"
       });
@@ -107,14 +116,45 @@ export function InvestmentExportCard({ dataSource, holdings, month, monthLabel }
       period: month
     });
 
+  const saveAnalysisRun = async (promptText: string, source: "investment_export" | "investment_tab") => {
+    await initAiAnalysisRunStorage();
+    await insertAiAnalysisRun(
+      createInvestmentAiAnalysisRun({
+        dataSource,
+        holdings,
+        period: month,
+        promptText,
+        source,
+        title: `${monthLabel} 投資AI分析`
+      })
+    );
+  };
+
+  const loadAiAnalysisRunsSummary = async () => {
+    try {
+      await initAiAnalysisRunStorage();
+      return buildAiAnalysisRunsSummary(await getAiAnalysisRunsByPeriod(month));
+    } catch {
+      return buildAiAnalysisRunsSummary([]);
+    }
+  };
+
   const handleExportPrompt = async () => {
     try {
+      const promptText = buildPrompt();
+
       await exportTextFile({
-        content: buildPrompt(),
+        content: promptText,
         fileName: buildInvestmentAiPromptTextFileName(month),
         mimeType: "text/plain;charset=utf-8"
       });
-      showMessage("AI分析プロンプトを出力しました", "success");
+
+      try {
+        await saveAnalysisRun(promptText, "investment_export");
+        showMessage("AI分析プロンプトを出力し、履歴にも保存しました", "success");
+      } catch {
+        showMessage("AI分析プロンプトを出力しました。履歴保存に失敗しました", "error");
+      }
     } catch {
       showMessage("出力に失敗しました", "error");
     }
@@ -122,10 +162,27 @@ export function InvestmentExportCard({ dataSource, holdings, month, monthLabel }
 
   const handleCopyPrompt = async () => {
     try {
-      await copyTextWithTimeout(buildPrompt());
-      showMessage("AI分析プロンプトをコピーしました", "success");
+      const promptText = buildPrompt();
+
+      await copyTextWithTimeout(promptText);
+
+      try {
+        await saveAnalysisRun(promptText, "investment_tab");
+        showMessage("AI分析プロンプトをコピーし、履歴にも保存しました", "success");
+      } catch {
+        showMessage("AI分析プロンプトをコピーしました。履歴保存に失敗しました", "error");
+      }
     } catch {
       showMessage("コピーに失敗しました", "error");
+    }
+  };
+
+  const handleSaveToHistory = async () => {
+    try {
+      await saveAnalysisRun(buildPrompt(), "investment_tab");
+      showMessage("投資AI分析を履歴に保存しました", "success");
+    } catch {
+      showMessage("履歴保存に失敗しました", "error");
     }
   };
 
@@ -150,6 +207,7 @@ export function InvestmentExportCard({ dataSource, holdings, month, monthLabel }
         <ExportButton label="JSONを出力" onPress={handleExportJson} />
         <ExportButton label="AI分析プロンプトを出力" onPress={handleExportPrompt} />
         <ExportButton label="AI分析プロンプトをコピー" onPress={handleCopyPrompt} secondary />
+        <ExportButton label="AI分析履歴へ保存" onPress={handleSaveToHistory} secondary />
       </View>
 
       {message ? (
