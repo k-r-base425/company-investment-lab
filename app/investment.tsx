@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 
+import { CollapsibleSection } from "../components/common/CollapsibleSection";
 import { InvestmentAllocationCard } from "../components/investment/InvestmentAllocationCard";
 import { InvestmentExportCard } from "../components/investment/InvestmentExportCard";
 import { InvestmentHoldingForm } from "../components/investment/InvestmentHoldingForm";
@@ -9,6 +10,8 @@ import { InvestmentHoldingList } from "../components/investment/InvestmentHoldin
 import { InvestmentIndicatorLearningSection } from "../components/investment/InvestmentIndicatorLearningSection";
 import { InvestmentIndicatorMemoCard } from "../components/investment/InvestmentIndicatorMemoCard";
 import { InvestmentModeTabs } from "../components/investment/InvestmentModeTabs";
+import { InvestmentQuickNav } from "../components/investment/InvestmentQuickNav";
+import type { InvestmentSectionKey } from "../components/investment/InvestmentQuickNav";
 import { InvestmentSummaryCards } from "../components/investment/InvestmentSummaryCards";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { useSelectedMonth } from "../contexts/SelectedMonthContext";
@@ -36,6 +39,12 @@ const clipboardTimeoutMs = 1800;
 
 export default function InvestmentScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
+  const [openSections, setOpenSections] = useState<Record<InvestmentSectionKey, boolean>>({
+    holdings: true,
+    io: true,
+    learning: false,
+    overview: true
+  });
   const [holdings, setHoldings] = useState<InvestmentHolding[]>(sampleInvestmentHoldings);
   const [mode, setMode] = useState<InvestmentHoldingMode>("actual");
   const [editingHolding, setEditingHolding] = useState<InvestmentHolding | null>(null);
@@ -47,6 +56,12 @@ export default function InvestmentScreen() {
   const summary = useMemo(() => calculateInvestmentSummary(holdings), [holdings]);
   const allocation = useMemo(() => buildInvestmentAllocation(holdings), [holdings]);
   const visibleHoldings = useMemo(() => filterInvestmentHoldingsByMode(holdings, mode), [holdings, mode]);
+  const sectionItems = [
+    { key: "overview" as const, label: "概況", isOpen: openSections.overview },
+    { key: "holdings" as const, label: "保有", isOpen: openSections.holdings },
+    { key: "learning" as const, label: "学習", isOpen: openSections.learning },
+    { key: "io" as const, label: "入出力", isOpen: openSections.io }
+  ];
 
   useEffect(() => {
     let canceled = false;
@@ -152,6 +167,20 @@ export default function InvestmentScreen() {
     }
   };
 
+  const handleToggleSection = (key: InvestmentSectionKey) => {
+    setOpenSections((current) => ({
+      ...current,
+      [key]: !current[key]
+    }));
+  };
+
+  const handleQuickNavSelect = (key: InvestmentSectionKey) => {
+    setOpenSections((current) => ({
+      ...current,
+      [key]: true
+    }));
+  };
+
   const handleAnalyzeHolding = async (holding: InvestmentHolding) => {
     try {
       setErrorMessage("");
@@ -197,56 +226,90 @@ export default function InvestmentScreen() {
             </Text>
           </View>
 
-          <View style={styles.dataStatusBox}>
-            <Text style={styles.dataStatusText}>
-              {isLoading
-                ? "投資データを読み込み中..."
-                : isFallback
-                  ? "サンプル投資データを表示中"
-                  : "保存済み投資データを反映中"}
-            </Text>
-          </View>
-
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
 
           {statusMessage ? <Text style={styles.successMessage}>{statusMessage}</Text> : null}
 
-          <InvestmentSummaryCards summary={summary} />
+          <InvestmentQuickNav items={sectionItems} onSelect={handleQuickNavSelect} />
 
-          <InvestmentModeTabs mode={mode} onChange={setMode} />
+          <CollapsibleSection
+            badgeText="評価額"
+            isOpen={openSections.overview}
+            onToggle={() => handleToggleSection("overview")}
+            subtitle="投資全体の評価額・損益・資産配分を確認します。"
+            title="概況"
+          >
+            <View style={styles.dataStatusBox}>
+              <Text style={styles.dataStatusText}>
+                {isLoading
+                  ? "投資データを読み込み中..."
+                  : isFallback
+                    ? "サンプル投資データを表示中"
+                    : "保存済み投資データを反映中"}
+              </Text>
+            </View>
 
-          <View style={styles.holdingAiNoteBox}>
-            <Text style={styles.holdingAiNoteText}>
-              銘柄AI分析では、選択した銘柄だけをAIに渡せる形式でコピーします。分析結果は学習・検討用であり、投資判断を断定するものではありません。
-            </Text>
-          </View>
+            <InvestmentSummaryCards summary={summary} />
 
-          <InvestmentHoldingList
-            holdings={visibleHoldings}
-            onAnalyze={handleAnalyzeHolding}
-            onDelete={handleDeleteHolding}
-            onEdit={handleEditHolding}
-          />
+            <InvestmentAllocationCard allocation={allocation} />
+          </CollapsibleSection>
 
-          <InvestmentHoldingForm
-            editingHolding={editingHolding}
-            onAdd={handleSubmitHolding}
-            onCancelEdit={handleCancelEdit}
-            submitLabel={editingHolding ? "銘柄を更新" : "銘柄を追加"}
-          />
+          <CollapsibleSection
+            badgeText={`${visibleHoldings.length}銘柄`}
+            isOpen={openSections.holdings}
+            onToggle={() => handleToggleSection("holdings")}
+            subtitle="実保有・仮想保有の銘柄を確認します。"
+            title="保有"
+          >
+            <InvestmentModeTabs mode={mode} onChange={setMode} />
 
-          <InvestmentIndicatorLearningSection holdings={visibleHoldings} />
+            <InvestmentHoldingList
+              holdings={visibleHoldings}
+              onAnalyze={handleAnalyzeHolding}
+              onDelete={handleDeleteHolding}
+              onEdit={handleEditHolding}
+            />
+          </CollapsibleSection>
 
-          <InvestmentIndicatorMemoCard />
+          <CollapsibleSection
+            badgeText="指標"
+            isOpen={openSections.learning}
+            onToggle={() => handleToggleSection("learning")}
+            subtitle="投資指標とAI分析の確認ポイントを学びます。"
+            title="学習・分析"
+          >
+            <View style={styles.holdingAiNoteBox}>
+              <Text style={styles.holdingAiNoteText}>
+                銘柄AI分析では、選択した銘柄だけをAIに渡せる形式でコピーします。分析結果は学習・検討用であり、投資判断を断定するものではありません。
+              </Text>
+            </View>
 
-          <InvestmentAllocationCard allocation={allocation} />
+            <InvestmentIndicatorLearningSection holdings={visibleHoldings} />
 
-          <InvestmentExportCard
-            dataSource={isFallback ? "sample" : "saved"}
-            holdings={holdings}
-            month={selectedMonth}
-            monthLabel={selectedMonthLabel}
-          />
+            <InvestmentIndicatorMemoCard />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            badgeText="追加/CSV"
+            isOpen={openSections.io}
+            onToggle={() => handleToggleSection("io")}
+            subtitle="銘柄追加と投資データ出力を行います。"
+            title="入力・出力"
+          >
+            <InvestmentHoldingForm
+              editingHolding={editingHolding}
+              onAdd={handleSubmitHolding}
+              onCancelEdit={handleCancelEdit}
+              submitLabel={editingHolding ? "銘柄を更新" : "銘柄を追加"}
+            />
+
+            <InvestmentExportCard
+              dataSource={isFallback ? "sample" : "saved"}
+              holdings={holdings}
+              month={selectedMonth}
+              monthLabel={selectedMonthLabel}
+            />
+          </CollapsibleSection>
         </View>
       </ScrollView>
       <BottomTabBar activeTab="investment" />
