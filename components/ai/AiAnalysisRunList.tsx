@@ -20,6 +20,7 @@ const themeLabels: Record<AiAnalysisRun["theme"], string> = {
   monthly_review: "月次レビュー",
   business_profitability: "収益性",
   household_review: "家計",
+  investment_holding_review: "銘柄分析",
   investment_review: "投資分析",
   learning_review: "学習",
   custom: "カスタム"
@@ -29,6 +30,7 @@ const sourceLabels: Record<AiAnalysisRun["source"], string> = {
   home_ai_card: "ホームAI",
   accounting_export: "会計出力",
   investment_export: "投資出力",
+  investment_holding_card: "銘柄カード",
   investment_tab: "投資タブ",
   manual: "手動"
 };
@@ -64,7 +66,7 @@ export function AiAnalysisRunList({ onCopyPrompt, onDelete, onSelect, runs, sele
             </View>
 
             <View style={styles.detailGrid}>
-              <InfoChip label="種別" value={isInvestmentRun(run) ? "投資分析" : "会計分析"} accent={isInvestmentRun(run)} />
+              <InfoChip label="種別" value={getRunCategoryLabel(run)} accent={isInvestmentRun(run)} />
               <InfoChip label="テーマ" value={themeLabels[run.theme] ?? run.theme} />
               <InfoChip label="source" value={sourceLabels[run.source] ?? run.source} />
               <InfoChip label="回答" value={run.responseText ? "回答保存済み" : "回答未保存"} />
@@ -144,7 +146,21 @@ function formatDateTime(value: string) {
 }
 
 function isInvestmentRun(run: AiAnalysisRun) {
-  return run.theme === "investment_review" || run.source === "investment_export" || run.source === "investment_tab";
+  return (
+    run.theme === "investment_review" ||
+    run.theme === "investment_holding_review" ||
+    run.source === "investment_export" ||
+    run.source === "investment_tab" ||
+    run.source === "investment_holding_card"
+  );
+}
+
+function getRunCategoryLabel(run: AiAnalysisRun) {
+  if (run.theme === "investment_holding_review" || run.source === "investment_holding_card") {
+    return "銘柄分析";
+  }
+
+  return isInvestmentRun(run) ? "投資分析" : "会計分析";
 }
 
 const styles = StyleSheet.create({

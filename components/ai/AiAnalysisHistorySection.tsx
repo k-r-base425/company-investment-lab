@@ -14,11 +14,12 @@ import {
 import type { AiAnalysisRun } from "../../lib/types/aiAnalysisRun";
 
 type FeedbackTone = "error" | "success";
-type HistoryFilter = "all" | "accounting" | "investment" | "saved" | "pending";
+type HistoryFilter = "all" | "accounting" | "investment" | "holding" | "saved" | "pending";
 
 const filterLabels: Record<HistoryFilter, string> = {
   all: "すべて",
   accounting: "会計",
+  holding: "銘柄",
   investment: "投資",
   saved: "回答保存済み",
   pending: "回答未保存"
@@ -117,7 +118,7 @@ export function AiAnalysisHistorySection() {
         responseText
       });
       await reloadRuns();
-      showFeedback(selectedRun.theme === "investment_review" ? "投資分析結果を保存しました" : "分析結果を保存しました");
+      showFeedback(getSavedResponseMessage(selectedRun));
       return true;
     } catch {
       setErrorMessage("分析結果の保存に失敗しました。");
@@ -154,7 +155,11 @@ export function AiAnalysisHistorySection() {
     }
 
     if (filter === "investment") {
-      return isInvestmentRun(run);
+      return isInvestmentRun(run) && !isInvestmentHoldingRun(run);
+    }
+
+    if (filter === "holding") {
+      return isInvestmentHoldingRun(run);
     }
 
     if (filter === "accounting") {
@@ -219,7 +224,29 @@ export function AiAnalysisHistorySection() {
 }
 
 function isInvestmentRun(run: AiAnalysisRun) {
-  return run.theme === "investment_review" || run.source === "investment_export" || run.source === "investment_tab";
+  return (
+    run.theme === "investment_review" ||
+    run.theme === "investment_holding_review" ||
+    run.source === "investment_export" ||
+    run.source === "investment_tab" ||
+    run.source === "investment_holding_card"
+  );
+}
+
+function isInvestmentHoldingRun(run: AiAnalysisRun) {
+  return run.theme === "investment_holding_review" || run.source === "investment_holding_card";
+}
+
+function getSavedResponseMessage(run: AiAnalysisRun) {
+  if (isInvestmentHoldingRun(run)) {
+    return "銘柄分析結果を保存しました";
+  }
+
+  if (isInvestmentRun(run)) {
+    return "投資分析結果を保存しました";
+  }
+
+  return "分析結果を保存しました";
 }
 
 async function copyTextWithTimeout(text: string) {

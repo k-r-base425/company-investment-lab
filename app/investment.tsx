@@ -1,21 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import * as Clipboard from "expo-clipboard";
 
 import { InvestmentAllocationCard } from "../components/investment/InvestmentAllocationCard";
 import { InvestmentExportCard } from "../components/investment/InvestmentExportCard";
 import { InvestmentHoldingForm } from "../components/investment/InvestmentHoldingForm";
 import { InvestmentHoldingList } from "../components/investment/InvestmentHoldingList";
+import { InvestmentIndicatorLearningSection } from "../components/investment/InvestmentIndicatorLearningSection";
 import { InvestmentIndicatorMemoCard } from "../components/investment/InvestmentIndicatorMemoCard";
 import { InvestmentModeTabs } from "../components/investment/InvestmentModeTabs";
 import { InvestmentSummaryCards } from "../components/investment/InvestmentSummaryCards";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { useSelectedMonth } from "../contexts/SelectedMonthContext";
+import { createInvestmentHoldingAiAnalysisRun } from "../lib/ai/createInvestmentHoldingAiAnalysisRun";
+import { buildInvestmentHoldingAnalysisPayload } from "../lib/investment/buildInvestmentHoldingAnalysisPayload";
+import { buildInvestmentHoldingPromptText } from "../lib/investment/buildInvestmentHoldingPromptText";
 import {
   buildInvestmentAllocation,
   calculateInvestmentSummary,
   filterInvestmentHoldingsByMode
 } from "../lib/investment/calculateInvestment";
 import { sampleInvestmentHoldings } from "../lib/investment/sampleInvestmentHoldings";
+import { initAiAnalysisRunStorage, insertAiAnalysisRun } from "../lib/storage/aiAnalysisRunRepository";
 import {
   deleteInvestmentHolding,
   getInvestmentHoldings,
@@ -25,6 +31,8 @@ import {
   updateInvestmentHolding
 } from "../lib/storage/investmentHoldingRepository";
 import type { InvestmentHolding, InvestmentHoldingMode } from "../lib/types/investment";
+
+const clipboardTimeoutMs = 1800;
 
 export default function InvestmentScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
@@ -144,6 +152,33 @@ export default function InvestmentScreen() {
     }
   };
 
+  const handleAnalyzeHolding = async (holding: InvestmentHolding) => {
+    try {
+      setErrorMessage("");
+      setStatusMessage("");
+
+      const payload = buildInvestmentHoldingAnalysisPayload({
+        allHoldings: holdings,
+        holding,
+        period: selectedMonth,
+        selectedMonthLabel
+      });
+      const promptText = buildInvestmentHoldingPromptText(payload);
+
+      await copyTextWithTimeout(promptText);
+
+      try {
+        await initAiAnalysisRunStorage();
+        await insertAiAnalysisRun(createInvestmentHoldingAiAnalysisRun({ payload, promptText }));
+        showStatusMessage("銘柄AI分析プロンプトをコピーし、履歴に保存しました");
+      } catch {
+        showStatusMessage("プロンプトはコピーしましたが、履歴保存に失敗しました");
+      }
+    } catch {
+      setErrorMessage("銘柄AI分析プロンプトの作成に失敗しました。");
+    }
+  };
+
   return (
     <View style={styles.root}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -180,7 +215,18 @@ export default function InvestmentScreen() {
 
           <InvestmentModeTabs mode={mode} onChange={setMode} />
 
-          <InvestmentHoldingList holdings={visibleHoldings} onDelete={handleDeleteHolding} onEdit={handleEditHolding} />
+          <View style={styles.holdingAiNoteBox}>
+            <Text style={styles.holdingAiNoteText}>
+              銘柄AI分析では、選択した銘柄だけをAIに渡せる形式でコピーします。分析結果は学習・検討用であり、投資判断を断定するものではありません。
+            </Text>
+          </View>
+
+          <InvestmentHoldingList
+            holdings={visibleHoldings}
+            onAnalyze={handleAnalyzeHolding}
+            onDelete={handleDeleteHolding}
+            onEdit={handleEditHolding}
+          />
 
           <InvestmentHoldingForm
             editingHolding={editingHolding}
@@ -188,6 +234,8 @@ export default function InvestmentScreen() {
             onCancelEdit={handleCancelEdit}
             submitLabel={editingHolding ? "銘柄を更新" : "銘柄を追加"}
           />
+
+          <InvestmentIndicatorLearningSection holdings={visibleHoldings} />
 
           <InvestmentIndicatorMemoCard />
 
@@ -315,5 +363,39 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 10,
     width: "100%"
+  },
+  holdingAiNoteBox: {
+    backgroundColor: "#F5F3FF",
+    borderColor: "#C4B5FD",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 12,
+    padding: 12,
+    width: "100%"
+  },
+  holdingAiNoteText: {
+    color: "#5B21B6",
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 18
   }
 });
+
+async function copyTextWithTimeout(text: string) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    await Promise.race([
+      Clipboard.setStringAsync(text),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error("Clipboard copy timed out"));
+        }, clipboardTimeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+}

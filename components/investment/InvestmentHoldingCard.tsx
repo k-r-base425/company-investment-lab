@@ -12,11 +12,12 @@ import {
 
 type InvestmentHoldingCardProps = {
   holding: InvestmentHoldingCalculated;
+  onAnalyze: (holding: InvestmentHoldingCalculated) => void;
   onEdit: (holding: InvestmentHoldingCalculated) => void;
   onDelete: (id: string) => void;
 };
 
-export function InvestmentHoldingCard({ holding, onDelete, onEdit }: InvestmentHoldingCardProps) {
+export function InvestmentHoldingCard({ holding, onAnalyze, onDelete, onEdit }: InvestmentHoldingCardProps) {
   const gainPositive = holding.gainLoss >= 0;
 
   return (
@@ -58,6 +59,13 @@ export function InvestmentHoldingCard({ holding, onDelete, onEdit }: InvestmentH
       ) : null}
 
       <View style={styles.actionRow}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onAnalyze(holding)}
+          style={({ pressed }) => [styles.actionButton, styles.analysisButton, pressed && styles.actionButtonPressed]}
+        >
+          <Text style={[styles.actionText, styles.analysisText]}>銘柄AI分析</Text>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           onPress={() => onEdit(holding)}
@@ -250,6 +258,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
     borderColor: "#FECACA"
   },
+  analysisButton: {
+    backgroundColor: "#F5F3FF",
+    borderColor: "#C4B5FD"
+  },
   actionButtonPressed: {
     opacity: 0.78
   },
@@ -263,5 +275,8 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     color: "#B91C1C"
+  },
+  analysisText: {
+    color: "#6D28D9"
   }
 });

@@ -4,7 +4,9 @@ import {
   calculateInvestmentSummary,
   investmentAssetTypeLabels
 } from "./calculateInvestment";
+import { buildInvestmentIndicatorReport } from "./buildInvestmentIndicatorReport";
 import { buildAiAnalysisRunsSummary, type AiAnalysisRunsSummary } from "../ai/buildAiAnalysisRunsSummary";
+import type { InvestmentIndicatorReport } from "../types/investmentIndicator";
 import type { InvestmentAssetType, InvestmentHolding } from "../types/investment";
 
 export type InvestmentAnalysisDataSource = "saved" | "sample";
@@ -60,6 +62,10 @@ export type InvestmentAnalysisPayload = {
     dividendYield: string;
   };
   aiAnalysisRunsSummary: AiAnalysisRunsSummary;
+  investmentIndicatorReport: InvestmentIndicatorReport;
+  analysisFeatures: {
+    singleHoldingAiPrompt: boolean;
+  };
   assumptions: string[];
   notes: string;
 };
@@ -85,6 +91,7 @@ export function buildInvestmentAnalysisPayload(
   } = params;
   const summary = calculateInvestmentSummary(holdings);
   const calculatedHoldings = holdings.map(calculateInvestmentHolding);
+  const investmentIndicatorReport = buildInvestmentIndicatorReport(holdings);
   const assets = calculatedHoldings.map((holding) => ({
     ...holding,
     assetTypeLabel: investmentAssetTypeLabels[holding.assetType],
@@ -121,6 +128,10 @@ export function buildInvestmentAnalysisPayload(
       dividendYield: "投資額に対して年間配当がどれくらいあるかを見る指標"
     },
     aiAnalysisRunsSummary,
+    investmentIndicatorReport,
+    analysisFeatures: {
+      singleHoldingAiPrompt: true
+    },
     assumptions: [
       "株価・指標は手入力またはサンプルです",
       "為替換算はまだ実装していません",

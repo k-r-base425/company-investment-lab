@@ -5,6 +5,7 @@ export type AiAnalysisTheme =
   | "business_profitability"
   | "household_review"
   | "investment_review"
+  | "investment_holding_review"
   | "learning_review"
   | "custom";
 
@@ -19,7 +20,13 @@ export type AiAnalysisRun = {
   responseText?: string;
   memo?: string;
   nextAction?: string;
-  source: "home_ai_card" | "accounting_export" | "investment_export" | "investment_tab" | "manual";
+  source:
+    | "home_ai_card"
+    | "accounting_export"
+    | "investment_export"
+    | "investment_tab"
+    | "investment_holding_card"
+    | "manual";
   createdAt: string;
   updatedAt: string;
 };

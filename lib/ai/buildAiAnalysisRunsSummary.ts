@@ -28,7 +28,13 @@ export function buildAiAnalysisRunsSummary(runs: AiAnalysisRun[]): AiAnalysisRun
 }
 
 function isInvestmentRun(run: AiAnalysisRun) {
-  return run.theme === "investment_review" || run.source === "investment_export" || run.source === "investment_tab";
+  return (
+    run.theme === "investment_review" ||
+    run.theme === "investment_holding_review" ||
+    run.source === "investment_export" ||
+    run.source === "investment_tab" ||
+    run.source === "investment_holding_card"
+  );
 }
 
 function isAccountingRun(run: AiAnalysisRun) {
