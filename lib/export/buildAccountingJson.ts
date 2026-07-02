@@ -8,6 +8,7 @@ import { buildImprovementActionsSummary } from "../accounting/buildImprovementAc
 import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccountingSummary";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import { buildInvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
+import { buildLearningMemoSummary } from "../learning/buildLearningMemoSummary";
 import type { InvestmentAnalysisDataSource } from "../investment/buildInvestmentAnalysisPayload";
 import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
@@ -16,6 +17,7 @@ import type { AiAnalysisRun } from "../types/aiAnalysisRun";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { InvestmentHolding } from "../types/investment";
+import type { LearningMemo } from "../types/learningMemo";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 import type { MonthlyTrendReport } from "../types/monthlyTrendReport";
 
@@ -28,7 +30,8 @@ export function buildAccountingJson(
   monthlyTrendReport?: MonthlyTrendReport,
   investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings,
   investmentDataSource: InvestmentAnalysisDataSource = "sample",
-  aiAnalysisRuns: AiAnalysisRun[] = []
+  aiAnalysisRuns: AiAnalysisRun[] = [],
+  learningMemos: LearningMemo[] = []
 ) {
   const monthlyEntries = entries.filter((entry) => entry.date.startsWith(month));
   const breakdowns = buildAccountingBreakdowns(entries, month);
@@ -63,6 +66,7 @@ export function buildAccountingJson(
     period: month
   });
   const aiAnalysisRunsSummary = buildAiAnalysisRunsSummary(aiAnalysisRuns);
+  const learningMemoSummary = buildLearningMemoSummary(learningMemos);
   const trendReport =
     monthlyTrendReport ??
     buildMonthlyTrendReport({
@@ -88,6 +92,7 @@ export function buildAccountingJson(
     improvementProgress,
     investment,
     aiAnalysisRunsSummary,
+    learningMemos: learningMemoSummary,
     monthlyTrendReport: trendReport,
     breakdowns,
     entries: monthlyEntries

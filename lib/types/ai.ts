@@ -5,6 +5,7 @@ import type { InvestmentAnalysisPayload } from "../investment/buildInvestmentAna
 import type { AccountingInsight } from "./accountingInsight";
 import type { CategoryMonthlyComparisonSummary } from "./categoryMonthlyComparison";
 import type { ImprovementProgressReport } from "./improvementProgress";
+import type { LearningMemoSummary } from "./learningMemo";
 import type { MonthlyComparisonSummary } from "./monthlyComparison";
 import type { MonthlyChartDay, MonthlyChartMetric } from "./monthlyChart";
 import type { MonthlyTrendReport } from "./monthlyTrendReport";
@@ -39,6 +40,7 @@ export type AiAnalysisPayload = {
   monthlyTrendReport?: MonthlyTrendReport;
   investment: InvestmentAnalysisPayload;
   aiAnalysisRunsSummary: AiAnalysisRunsSummary;
+  learningMemos: LearningMemoSummary;
   monthlyChart: {
     month: string;
     metric: MonthlyChartMetric;

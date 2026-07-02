@@ -21,8 +21,10 @@ import {
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../../lib/storage/improvementActionRepository";
 import { getInvestmentHoldings, initInvestmentHoldingStorage } from "../../lib/storage/investmentHoldingRepository";
+import { getLearningMemos, initLearningMemoStorage } from "../../lib/storage/learningMemoRepository";
 import type { ImprovementAction } from "../../lib/types/improvementAction";
 import type { AiAnalysisRun } from "../../lib/types/aiAnalysisRun";
+import type { LearningMemo } from "../../lib/types/learningMemo";
 
 type CopyStatus = "idle" | "success" | "historyError" | "error";
 
@@ -111,6 +113,7 @@ export function AiAnalysisCard() {
       let investmentHoldings = sampleInvestmentHoldings;
       let investmentDataSource: "saved" | "sample" = "sample";
       let aiAnalysisRuns: AiAnalysisRun[] = [];
+      let learningMemos: LearningMemo[] = [];
 
       try {
         await initInvestmentHoldingStorage();
@@ -129,6 +132,13 @@ export function AiAnalysisCard() {
         aiAnalysisRuns = [];
       }
 
+      try {
+        await initLearningMemoStorage();
+        learningMemos = await getLearningMemos();
+      } catch {
+        learningMemos = [];
+      }
+
       const payload = buildHomeAiAnalysisPayload(
         entries,
         selectedMonth,
@@ -138,7 +148,8 @@ export function AiAnalysisCard() {
         monthlyTrendReport,
         investmentHoldings,
         investmentDataSource,
-        aiAnalysisRuns
+        aiAnalysisRuns,
+        learningMemos
       );
       const prompt = buildAiAnalysisPrompt(payload);
       await Clipboard.setStringAsync(prompt);

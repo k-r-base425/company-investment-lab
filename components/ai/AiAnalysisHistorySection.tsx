@@ -5,12 +5,14 @@ import * as Clipboard from "expo-clipboard";
 import { AiAnalysisRunEditor } from "./AiAnalysisRunEditor";
 import { AiAnalysisRunList } from "./AiAnalysisRunList";
 import { useSelectedMonth } from "../../contexts/SelectedMonthContext";
+import { createLearningMemoFromAiAnalysisRun } from "../../lib/learning/createLearningMemoFromAiAnalysisRun";
 import {
   deleteAiAnalysisRun,
   getAiAnalysisRunsByPeriod,
   initAiAnalysisRunStorage,
   updateAiAnalysisRunResponse
 } from "../../lib/storage/aiAnalysisRunRepository";
+import { initLearningMemoStorage, insertLearningMemo } from "../../lib/storage/learningMemoRepository";
 import type { AiAnalysisRun } from "../../lib/types/aiAnalysisRun";
 
 type FeedbackTone = "error" | "success";
@@ -26,7 +28,11 @@ const filterLabels: Record<HistoryFilter, string> = {
 };
 const copyTimeoutMs = 1800;
 
-export function AiAnalysisHistorySection() {
+type AiAnalysisHistorySectionProps = {
+  onLearningMemoSaved?: () => void;
+};
+
+export function AiAnalysisHistorySection({ onLearningMemoSaved }: AiAnalysisHistorySectionProps) {
   const { selectedMonth } = useSelectedMonth();
   const [runs, setRuns] = useState<AiAnalysisRun[]>([]);
   const [filter, setFilter] = useState<HistoryFilter>("all");
@@ -149,6 +155,21 @@ export function AiAnalysisHistorySection() {
     }
   };
 
+  const handleSaveSelectedRunAsLearningMemo = async () => {
+    if (!selectedRun) {
+      return;
+    }
+
+    try {
+      await initLearningMemoStorage();
+      await insertLearningMemo(createLearningMemoFromAiAnalysisRun(selectedRun));
+      showFeedback("AI分析結果を学習メモに保存しました");
+      onLearningMemoSaved?.();
+    } catch {
+      showFeedback("学習メモの保存に失敗しました", "error");
+    }
+  };
+
   const filteredRuns = runs.filter((run) => {
     if (filter === "all") {
       return true;
@@ -217,6 +238,16 @@ export function AiAnalysisHistorySection() {
         runs={filteredRuns}
         selectedRunId={selectedRun?.id}
       />
+
+      {selectedRun ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={handleSaveSelectedRunAsLearningMemo}
+          style={({ pressed }) => [styles.memoButton, pressed && styles.memoButtonPressed]}
+        >
+          <Text style={styles.memoButtonText}>学習メモに保存</Text>
+        </Pressable>
+      ) : null}
 
       <AiAnalysisRunEditor onCancel={() => setSelectedRun(null)} onSave={handleSaveResponse} run={selectedRun} />
     </View>
@@ -400,5 +431,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
     borderColor: "#FECACA",
     color: "#B91C1C"
+  },
+  memoButton: {
+    alignItems: "center",
+    backgroundColor: "#ECFDF5",
+    borderColor: "#BBF7D0",
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: "center",
+    marginTop: 12,
+    minHeight: 42,
+    paddingHorizontal: 12,
+    paddingVertical: 9
+  },
+  memoButtonPressed: {
+    opacity: 0.78
+  },
+  memoButtonText: {
+    color: "#166534",
+    fontSize: 13,
+    fontWeight: "900"
   }
 });

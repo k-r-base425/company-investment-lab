@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { RecentLearningMemosCard } from "./RecentLearningMemosCard";
+import { buildLearningMemoSummary } from "../../lib/learning/buildLearningMemoSummary";
 import {
   getAiAnalysisRunsByPeriod,
   initAiAnalysisRunStorage
 } from "../../lib/storage/aiAnalysisRunRepository";
+import { getLearningMemos, initLearningMemoStorage } from "../../lib/storage/learningMemoRepository";
 import type { AiAnalysisRun } from "../../lib/types/aiAnalysisRun";
+import type { LearningMemo } from "../../lib/types/learningMemo";
 
 type LearningDashboardSectionProps = {
   month: string;
   monthLabel: string;
+  refreshKey?: number;
 };
 
 const recommendedTopics = [
@@ -30,28 +35,33 @@ const recommendedTopics = [
   }
 ];
 
-export function LearningDashboardSection({ month, monthLabel }: LearningDashboardSectionProps) {
+export function LearningDashboardSection({ month, monthLabel, refreshKey = 0 }: LearningDashboardSectionProps) {
   const [runs, setRuns] = useState<AiAnalysisRun[]>([]);
+  const [memos, setMemos] = useState<LearningMemo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const memoSummary = useMemo(() => buildLearningMemoSummary(memos), [memos]);
 
   useEffect(() => {
     let canceled = false;
 
-    async function loadRuns() {
+    async function loadDashboardData() {
       try {
         setIsLoading(true);
         setErrorMessage("");
         await initAiAnalysisRunStorage();
-        const savedRuns = await getAiAnalysisRunsByPeriod(month);
+        await initLearningMemoStorage();
+        const [savedRuns, savedMemos] = await Promise.all([getAiAnalysisRunsByPeriod(month), getLearningMemos()]);
 
         if (!canceled) {
           setRuns(savedRuns);
+          setMemos(savedMemos);
         }
       } catch {
         if (!canceled) {
           setRuns([]);
-          setErrorMessage("AI分析履歴の件数を読み込めませんでした。");
+          setMemos([]);
+          setErrorMessage("学習ダッシュボードのデータを読み込めませんでした。");
         }
       } finally {
         if (!canceled) {
@@ -60,12 +70,12 @@ export function LearningDashboardSection({ month, monthLabel }: LearningDashboar
       }
     }
 
-    loadRuns();
+    loadDashboardData();
 
     return () => {
       canceled = true;
     };
-  }, [month]);
+  }, [month, refreshKey]);
 
   const responseSavedCount = runs.filter((run) => run.status === "response_saved" || Boolean(run.responseText)).length;
   const responsePendingCount = Math.max(runs.length - responseSavedCount, 0);
@@ -99,6 +109,8 @@ export function LearningDashboardSection({ month, monthLabel }: LearningDashboar
           ))}
         </View>
       </View>
+
+      <RecentLearningMemosCard summary={memoSummary} />
     </View>
   );
 }

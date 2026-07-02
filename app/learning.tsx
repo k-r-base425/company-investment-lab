@@ -12,8 +12,10 @@ import { useSelectedMonth } from "../contexts/SelectedMonthContext";
 
 const accountingTopics = [
   {
+    id: "profit-vs-cashflow",
     title: "利益とキャッシュフローの違い",
     category: "会計" as const,
+    memoCategory: "accounting" as const,
     description: "利益が出ていても現金が不足する理由を学びます。",
     relatedScreens: ["ホームKPI", "投資可能額", "月比較"],
     learningPoints: [
@@ -24,8 +26,10 @@ const accountingTopics = [
     tone: "blue" as const
   },
   {
+    id: "fixed-assets-depreciation",
     title: "簿記2級：固定資産と減価償却",
     category: "簿記" as const,
+    memoCategory: "bookkeeping" as const,
     description: "固定資産の取得、減価償却、決算整理を学びます。",
     relatedScreens: ["会計入力", "経費カテゴリ", "改善コメント"],
     learningPoints: [
@@ -36,8 +40,10 @@ const accountingTopics = [
     tone: "green" as const
   },
   {
+    id: "expense-profit-margin",
     title: "経費率と利益率",
     category: "会計" as const,
+    memoCategory: "accounting" as const,
     description: "売上に対して経費と利益がどれくらいあるかを確認します。",
     relatedScreens: ["ホームKPI", "前月比", "改善コメント"],
     learningPoints: [
@@ -48,8 +54,10 @@ const accountingTopics = [
     tone: "orange" as const
   },
   {
+    id: "journal-entry-basics",
     title: "仕訳の基本",
     category: "簿記" as const,
+    memoCategory: "bookkeeping" as const,
     description: "借方・貸方の考え方と、取引を記録する基本を学びます。",
     relatedScreens: ["会計入力", "仕訳フォーム"],
     learningPoints: [
@@ -60,8 +68,10 @@ const accountingTopics = [
     tone: "teal" as const
   },
   {
+    id: "estimated-tax-investable",
     title: "税金目安と投資可能額",
     category: "会計" as const,
+    memoCategory: "accounting" as const,
     description: "概算税額を差し引いたあとに、投資へ回せる余力を考えます。",
     relatedScreens: ["ホームKPI", "AI分析JSON", "改善効果"],
     learningPoints: [
@@ -75,8 +85,10 @@ const accountingTopics = [
 
 const investmentTopics = [
   {
+    id: "per-pbr-roe",
     title: "PER / PBR / ROE",
     category: "投資" as const,
+    memoCategory: "investment" as const,
     description: "銘柄の株価指標と資本効率を確認します。",
     relatedScreens: ["投資タブ", "投資指標学習", "銘柄AI分析"],
     learningPoints: [
@@ -88,8 +100,10 @@ const investmentTopics = [
     tone: "green" as const
   },
   {
+    id: "dividend-yield",
     title: "配当利回り",
     category: "投資" as const,
+    memoCategory: "investment" as const,
     description: "投資額に対してどれくらい配当があるかを確認します。",
     relatedScreens: ["投資タブ", "投資データ出力"],
     learningPoints: [
@@ -100,8 +114,10 @@ const investmentTopics = [
     tone: "orange" as const
   },
   {
+    id: "cash-ratio-safety",
     title: "現金比率と安全余力",
     category: "投資" as const,
+    memoCategory: "investment" as const,
     description: "現金比率から、投資余力と生活防衛資金のバランスを考えます。",
     relatedScreens: ["ホーム資産配分", "投資サマリー"],
     learningPoints: [
@@ -112,8 +128,10 @@ const investmentTopics = [
     tone: "teal" as const
   },
   {
+    id: "actual-virtual-holdings",
     title: "実保有と仮想保有",
     category: "投資" as const,
+    memoCategory: "investment" as const,
     description: "実際に持っている銘柄と、学習用に追う銘柄を分けて管理します。",
     relatedScreens: ["投資タブ", "銘柄AI分析"],
     learningPoints: [
@@ -124,8 +142,10 @@ const investmentTopics = [
     tone: "purple" as const
   },
   {
+    id: "holding-ai-analysis",
     title: "銘柄別AI分析",
     category: "AI" as const,
+    memoCategory: "ai_analysis" as const,
     description: "1銘柄ずつAI分析用にコピーし、次に調べる情報を整理します。",
     relatedScreens: ["投資タブ", "AI分析履歴"],
     learningPoints: [
@@ -137,8 +157,24 @@ const investmentTopics = [
   }
 ];
 
+const aiReviewTopic = {
+  id: "ai-analysis-review",
+  title: "AI分析結果の見返し",
+  category: "AI" as const,
+  memoCategory: "ai_analysis" as const,
+  description: "AI分析結果から重要な気づきと次の行動を整理します。",
+  relatedScreens: ["AI分析履歴", "ホームAI分析"],
+  learningPoints: [
+    "AIに判断させるのではなく、確認観点を整理する",
+    "回答を保存して、次の行動に変換する",
+    "学習メモとして残す言葉を選ぶ"
+  ],
+  tone: "blue" as const
+};
+
 export default function LearningScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
+  const [memoRefreshKey, setMemoRefreshKey] = useState(0);
   const [openSections, setOpenSections] = useState<Record<LearningSectionKey, boolean>>({
     accounting: true,
     aiHistory: true,
@@ -164,6 +200,10 @@ export default function LearningScreen() {
       ...current,
       [key]: true
     }));
+  };
+
+  const handleMemoChanged = () => {
+    setMemoRefreshKey((current) => current + 1);
   };
 
   return (
@@ -194,7 +234,11 @@ export default function LearningScreen() {
             subtitle="今の学習状況とAI分析履歴を確認します。"
             title="学習ダッシュボード"
           >
-            <LearningDashboardSection month={selectedMonth} monthLabel={selectedMonthLabel} />
+            <LearningDashboardSection
+              month={selectedMonth}
+              monthLabel={selectedMonthLabel}
+              refreshKey={memoRefreshKey}
+            />
           </CollapsibleSection>
 
           <CollapsibleSection
@@ -206,7 +250,12 @@ export default function LearningScreen() {
           >
             <View style={styles.topicList}>
               {accountingTopics.map((topic) => (
-                <LearningTopicCard key={topic.title} {...topic} />
+                <LearningTopicCard
+                  key={topic.id}
+                  memoRefreshKey={memoRefreshKey}
+                  onMemoChanged={handleMemoChanged}
+                  {...topic}
+                />
               ))}
             </View>
           </CollapsibleSection>
@@ -220,7 +269,12 @@ export default function LearningScreen() {
           >
             <View style={styles.topicList}>
               {investmentTopics.map((topic) => (
-                <LearningTopicCard key={topic.title} {...topic} />
+                <LearningTopicCard
+                  key={topic.id}
+                  memoRefreshKey={memoRefreshKey}
+                  onMemoChanged={handleMemoChanged}
+                  {...topic}
+                />
               ))}
             </View>
           </CollapsibleSection>
@@ -232,7 +286,15 @@ export default function LearningScreen() {
             subtitle="会計分析・投資分析・銘柄分析のプロンプトと回答を見返します。"
             title="AI分析履歴"
           >
-            <AiAnalysisHistorySection />
+            <View style={styles.topicList}>
+              <LearningTopicCard
+                key={aiReviewTopic.id}
+                memoRefreshKey={memoRefreshKey}
+                onMemoChanged={handleMemoChanged}
+                {...aiReviewTopic}
+              />
+            </View>
+            <AiAnalysisHistorySection onLearningMemoSaved={handleMemoChanged} />
           </CollapsibleSection>
         </View>
       </ScrollView>

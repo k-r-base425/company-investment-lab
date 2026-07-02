@@ -14,7 +14,11 @@ import {
   createImprovementActionsTableSql,
   createInvestmentHoldingsAssetTypeIndexSql,
   createInvestmentHoldingsPositionTypeIndexSql,
-  createInvestmentHoldingsTableSql
+  createInvestmentHoldingsTableSql,
+  createLearningMemosCategoryIndexSql,
+  createLearningMemosCreatedAtIndexSql,
+  createLearningMemosTableSql,
+  createLearningMemosTopicIdIndexSql
 } from "./accountingSchema";
 
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -42,4 +46,8 @@ export async function initAccountingDatabase() {
   await database.execAsync(createInvestmentHoldingsTableSql);
   await database.execAsync(createInvestmentHoldingsAssetTypeIndexSql);
   await database.execAsync(createInvestmentHoldingsPositionTypeIndexSql);
+  await database.execAsync(createLearningMemosTableSql);
+  await database.execAsync(createLearningMemosTopicIdIndexSql);
+  await database.execAsync(createLearningMemosCategoryIndexSql);
+  await database.execAsync(createLearningMemosCreatedAtIndexSql);
 }

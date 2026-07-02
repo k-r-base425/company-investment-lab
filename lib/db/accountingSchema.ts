@@ -124,3 +124,35 @@ export const createInvestmentHoldingsPositionTypeIndexSql = `
 CREATE INDEX IF NOT EXISTS idx_investment_holdings_position_type
 ON investment_holdings(position_type);
 `;
+
+export const createLearningMemosTableSql = `
+CREATE TABLE IF NOT EXISTS learning_memos (
+  id TEXT PRIMARY KEY NOT NULL,
+  topic_id TEXT NOT NULL,
+  topic_title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  source TEXT NOT NULL,
+  source_ai_analysis_run_id TEXT,
+  source_ai_analysis_run_title TEXT,
+  related_screen TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+`;
+
+export const createLearningMemosTopicIdIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_learning_memos_topic_id
+ON learning_memos(topic_id);
+`;
+
+export const createLearningMemosCategoryIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_learning_memos_category
+ON learning_memos(category);
+`;
+
+export const createLearningMemosCreatedAtIndexSql = `
+CREATE INDEX IF NOT EXISTS idx_learning_memos_created_at
+ON learning_memos(created_at);
+`;

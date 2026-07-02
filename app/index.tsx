@@ -25,9 +25,11 @@ import { defaultSelectedMonth, getPreviousMonth } from "../lib/month/monthUtils"
 import { getAccountingEntriesByMonth, initAccountingStorage } from "../lib/storage/accountingEntryRepository";
 import { getImprovementActionsByPeriod, initImprovementActionStorage } from "../lib/storage/improvementActionRepository";
 import { getInvestmentHoldings, initInvestmentHoldingStorage } from "../lib/storage/investmentHoldingRepository";
+import { getLearningMemos, initLearningMemoStorage } from "../lib/storage/learningMemoRepository";
 import type { AccountingEntry } from "../lib/types/accounting";
 import type { ImprovementAction } from "../lib/types/improvementAction";
 import type { InvestmentHolding } from "../lib/types/investment";
+import type { LearningMemo } from "../lib/types/learningMemo";
 
 const accountingLoadErrorMessage = "会計データの読み込みに失敗しました。";
 const investmentLoadErrorMessage = "投資データの読み込みに失敗しました。";
@@ -48,6 +50,7 @@ export default function HomeScreen() {
   const [isInvestmentFallback, setIsInvestmentFallback] = useState(true);
   const [isInvestmentLoading, setIsInvestmentLoading] = useState(true);
   const [investmentErrorMessage, setInvestmentErrorMessage] = useState("");
+  const [learningMemos, setLearningMemos] = useState<LearningMemo[]>([]);
   const previousMonth = useMemo(() => getPreviousMonth(selectedMonth), [selectedMonth]);
   const monthlyComparison = useMemo(() => {
     const currentSummary = calculateMonthlyAccountingSummary(accountingEntries, selectedMonth);
@@ -171,12 +174,22 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const loadLearningMemos = useCallback(async () => {
+    try {
+      await initLearningMemoStorage();
+      setLearningMemos(await getLearningMemos());
+    } catch {
+      setLearningMemos([]);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadAccountingEntries();
       loadImprovementActions();
       loadInvestmentHoldings();
-    }, [loadAccountingEntries, loadImprovementActions, loadInvestmentHoldings])
+      loadLearningMemos();
+    }, [loadAccountingEntries, loadImprovementActions, loadInvestmentHoldings, loadLearningMemos])
   );
 
   return (
@@ -224,7 +237,7 @@ export default function HomeScreen() {
 
           <AssetAllocationCard summary={assetAllocationSummary} />
 
-          <TodayLearningCard topics={sampleLearningTopics} />
+          <TodayLearningCard latestMemos={learningMemos.slice(0, 3)} topics={sampleLearningTopics} />
 
           <HomeImprovementActionsCard
             actions={improvementActions}

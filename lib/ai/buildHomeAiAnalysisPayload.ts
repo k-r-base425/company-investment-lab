@@ -8,6 +8,7 @@ import { calculateMonthlyAccountingSummary } from "../accounting/calculateAccoun
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import { buildInvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
+import { buildLearningMemoSummary } from "../learning/buildLearningMemoSummary";
 import type { InvestmentAnalysisDataSource } from "../investment/buildInvestmentAnalysisPayload";
 import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { getPreviousMonth, getPreviousMonthsIncludingSelected } from "../month/monthUtils";
@@ -18,6 +19,7 @@ import type { AiAnalysisRun } from "../types/aiAnalysisRun";
 import type { CategoryMonthlyComparisonSummary } from "../types/categoryMonthlyComparison";
 import type { ImprovementAction } from "../types/improvementAction";
 import type { InvestmentHolding } from "../types/investment";
+import type { LearningMemo } from "../types/learningMemo";
 import type { MonthlyComparisonSummary } from "../types/monthlyComparison";
 import type { MonthlyTrendReport } from "../types/monthlyTrendReport";
 
@@ -30,7 +32,8 @@ export function buildHomeAiAnalysisPayload(
   monthlyTrendReport?: MonthlyTrendReport,
   investmentHoldings: InvestmentHolding[] = sampleInvestmentHoldings,
   investmentDataSource: InvestmentAnalysisDataSource = "sample",
-  aiAnalysisRuns: AiAnalysisRun[] = []
+  aiAnalysisRuns: AiAnalysisRun[] = [],
+  learningMemos: LearningMemo[] = []
 ): AiAnalysisPayload {
   const previousMonth = getPreviousMonth(month);
   const comparison =
@@ -56,6 +59,7 @@ export function buildHomeAiAnalysisPayload(
   const improvementActions = buildImprovementActionsSummary(actions, month);
   const improvementProgress = buildImprovementProgressReport({ actions, entries, period: month });
   const aiAnalysisRunsSummary = buildAiAnalysisRunsSummary(aiAnalysisRuns);
+  const learningMemoSummary = buildLearningMemoSummary(learningMemos);
   const investment = buildInvestmentAnalysisPayload({
     dataSource: investmentDataSource,
     holdings: investmentHoldings,
@@ -98,6 +102,7 @@ export function buildHomeAiAnalysisPayload(
     improvementProgress,
     investment,
     aiAnalysisRunsSummary,
+    learningMemos: learningMemoSummary,
     monthlyTrendReport: trendReport,
     monthlyChart: {
       month,

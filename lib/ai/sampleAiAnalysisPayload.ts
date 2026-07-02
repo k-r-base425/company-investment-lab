@@ -5,6 +5,7 @@ import { buildMonthlyTrendReport } from "../accounting/buildMonthlyTrendReport";
 import { buildMonthlyChartFromAccountingEntries } from "../home/buildMonthlyChartFromAccountingEntries";
 import { buildImprovementProgressReport } from "../improvement/buildImprovementProgressReport";
 import { buildInvestmentAnalysisPayload } from "../investment/buildInvestmentAnalysisPayload";
+import { buildLearningMemoSummary } from "../learning/buildLearningMemoSummary";
 import { sampleInvestmentHoldings } from "../investment/sampleInvestmentHoldings";
 import { sampleAccountingEntries } from "../accounting/sampleAccountingEntries";
 import type { AiAnalysisPayload } from "../types/ai";
@@ -28,6 +29,7 @@ const sampleMonthlyTrendReport = buildMonthlyTrendReport({
 });
 const sampleInvestmentAnalysis = buildInvestmentAnalysisPayload(sampleInvestmentHoldings);
 const sampleAiAnalysisRunsSummary = buildAiAnalysisRunsSummary([]);
+const sampleLearningMemoSummary = buildLearningMemoSummary([]);
 
 export const sampleMonthlyChartDays = sampleMonthlyChartData.days;
 
@@ -62,6 +64,7 @@ export const sampleAiAnalysisPayload: AiAnalysisPayload = {
   monthlyTrendReport: sampleMonthlyTrendReport,
   investment: sampleInvestmentAnalysis,
   aiAnalysisRunsSummary: sampleAiAnalysisRunsSummary,
+  learningMemos: sampleLearningMemoSummary,
   monthlyChart: {
     month: "2026-06",
     metric: "profit",

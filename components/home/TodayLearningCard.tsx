@@ -1,13 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { LearningTopic } from "../../lib/types/learning";
+import type { LearningMemo } from "../../lib/types/learningMemo";
 import { LearningTopicItem } from "./LearningTopicItem";
 
 type TodayLearningCardProps = {
+  latestMemos?: LearningMemo[];
   topics: LearningTopic[];
 };
 
-export function TodayLearningCard({ topics }: TodayLearningCardProps) {
+export function TodayLearningCard({ latestMemos = [], topics }: TodayLearningCardProps) {
   const handleSeeAll = () => {
     // TODO: 学習一覧ページを作成したらExpo Routerで学習タブへ遷移する。
     console.log("Open all learning topics");
@@ -33,6 +35,22 @@ export function TodayLearningCard({ topics }: TodayLearningCardProps) {
         {topics.map((topic) => (
           <LearningTopicItem key={topic.id} topic={topic} />
         ))}
+      </View>
+
+      <View style={styles.memoBox}>
+        <Text style={styles.memoTitle}>最新メモ</Text>
+        {latestMemos.length > 0 ? (
+          <View style={styles.memoList}>
+            {latestMemos.slice(0, 2).map((memo) => (
+              <View key={memo.id} style={styles.memoItem}>
+                <Text style={styles.memoTopic}>{memo.topicTitle}</Text>
+                <Text style={styles.memoText}>{memo.title}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.emptyMemoText}>学習メモを保存すると、ここに最近の気づきが表示されます。</Text>
+        )}
       </View>
     </View>
   );
@@ -95,5 +113,48 @@ const styles = StyleSheet.create({
   topicList: {
     gap: 12,
     marginTop: 16
+  },
+  memoBox: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 14,
+    padding: 12
+  },
+  memoTitle: {
+    color: "#0F172A",
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 18
+  },
+  memoList: {
+    gap: 8,
+    marginTop: 8
+  },
+  memoItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: 9
+  },
+  memoTopic: {
+    color: "#1D4ED8",
+    fontSize: 11,
+    fontWeight: "900",
+    lineHeight: 15
+  },
+  memoText: {
+    color: "#334155",
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 18,
+    marginTop: 2
+  },
+  emptyMemoText: {
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 18,
+    marginTop: 6
   }
 });
