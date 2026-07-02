@@ -160,7 +160,25 @@ function getRunCategoryLabel(run: AiAnalysisRun) {
     return "銘柄分析";
   }
 
-  return isInvestmentRun(run) ? "投資分析" : "会計分析";
+  if (run.theme === "investment_review" || run.source === "investment_export" || run.source === "investment_tab") {
+    return "投資分析";
+  }
+
+  if (run.theme === "learning_review") {
+    return "学習";
+  }
+
+  if (
+    run.theme === "monthly_review" ||
+    run.theme === "business_profitability" ||
+    run.theme === "household_review" ||
+    run.source === "accounting_export" ||
+    run.source === "home_ai_card"
+  ) {
+    return "会計分析";
+  }
+
+  return "その他";
 }
 
 const styles = StyleSheet.create({

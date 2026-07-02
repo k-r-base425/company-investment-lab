@@ -163,7 +163,7 @@ export function AiAnalysisHistorySection() {
     }
 
     if (filter === "accounting") {
-      return !isInvestmentRun(run);
+      return isAccountingRun(run);
     }
 
     if (filter === "saved") {
@@ -235,6 +235,16 @@ function isInvestmentRun(run: AiAnalysisRun) {
 
 function isInvestmentHoldingRun(run: AiAnalysisRun) {
   return run.theme === "investment_holding_review" || run.source === "investment_holding_card";
+}
+
+function isAccountingRun(run: AiAnalysisRun) {
+  return (
+    run.theme === "monthly_review" ||
+    run.theme === "business_profitability" ||
+    run.theme === "household_review" ||
+    run.source === "accounting_export" ||
+    run.source === "home_ai_card"
+  );
 }
 
 function getSavedResponseMessage(run: AiAnalysisRun) {
