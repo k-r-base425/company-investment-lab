@@ -94,6 +94,8 @@ export function LearningDashboardSection({ month, monthLabel, refreshKey = 0 }: 
           <SummaryItem label="回答保存済み" value={`${responseSavedCount}件`} />
           <SummaryItem label="回答未保存" value={`${responsePendingCount}件`} />
           <SummaryItem label="今月の対象月" value={monthLabel} />
+          <SummaryItem label="学習メモ" value={`${memoSummary.totalCount}件`} />
+          <SummaryItem label="AI分析由来メモ" value={`${memoSummary.aiDerivedMemoCount}件`} />
         </View>
       </View>
 

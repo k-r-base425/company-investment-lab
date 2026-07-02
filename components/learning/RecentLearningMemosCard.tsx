@@ -21,11 +21,15 @@ export function RecentLearningMemosCard({ summary }: RecentLearningMemosCardProp
       <View style={styles.header}>
         <View style={styles.headerText}>
           <Text style={styles.title}>最近の学習メモ</Text>
-          <Text style={styles.subtitle}>学習カードやAI分析履歴から保存したメモ</Text>
+          <Text style={styles.subtitle}>学習カードやAI分析履歴から保存したメモ。検索であとから探せます。</Text>
         </View>
         <View style={styles.countBadge}>
           <Text style={styles.countText}>{summary.totalCount}件</Text>
         </View>
+      </View>
+      <View style={styles.metaRow}>
+        <Text style={styles.metaPill}>手動 {summary.manualMemoCount}件</Text>
+        <Text style={styles.metaPill}>AI分析由来 {summary.aiDerivedMemoCount}件</Text>
       </View>
 
       {summary.latestMemos.length === 0 ? (
@@ -106,6 +110,25 @@ const styles = StyleSheet.create({
     color: "#166534",
     fontSize: 11,
     fontWeight: "900"
+  },
+  metaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 10
+  },
+  metaPill: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
+    borderRadius: 999,
+    borderWidth: 1,
+    color: "#475569",
+    fontSize: 10,
+    fontWeight: "900",
+    lineHeight: 14,
+    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 4
   },
   emptyBox: {
     backgroundColor: "#F8FAFC",

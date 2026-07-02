@@ -5,6 +5,7 @@ import { AiAnalysisHistorySection } from "../components/ai/AiAnalysisHistorySect
 import { CollapsibleSection } from "../components/common/CollapsibleSection";
 import { BottomTabBar } from "../components/layout/BottomTabBar";
 import { LearningDashboardSection } from "../components/learning/LearningDashboardSection";
+import { LearningMemoSearchSection } from "../components/learning/LearningMemoSearchSection";
 import { LearningQuickNav } from "../components/learning/LearningQuickNav";
 import type { LearningSectionKey } from "../components/learning/LearningQuickNav";
 import { LearningTopicCard } from "../components/learning/LearningTopicCard";
@@ -172,6 +173,11 @@ const aiReviewTopic = {
   tone: "blue" as const
 };
 
+const learningMemoSearchTopics = [...accountingTopics, ...investmentTopics, aiReviewTopic].map((topic) => ({
+  id: topic.id,
+  title: topic.title
+}));
+
 export default function LearningScreen() {
   const { selectedMonth, selectedMonthLabel } = useSelectedMonth();
   const [memoRefreshKey, setMemoRefreshKey] = useState(0);
@@ -179,10 +185,12 @@ export default function LearningScreen() {
     accounting: true,
     aiHistory: true,
     dashboard: true,
-    investment: true
+    investment: true,
+    memoSearch: true
   });
   const sectionItems = [
     { key: "dashboard" as const, label: "概要", isOpen: openSections.dashboard },
+    { key: "memoSearch" as const, label: "メモ", isOpen: openSections.memoSearch },
     { key: "accounting" as const, label: "会計", isOpen: openSections.accounting },
     { key: "investment" as const, label: "投資", isOpen: openSections.investment },
     { key: "aiHistory" as const, label: "AI履歴", isOpen: openSections.aiHistory }
@@ -238,6 +246,20 @@ export default function LearningScreen() {
               month={selectedMonth}
               monthLabel={selectedMonthLabel}
               refreshKey={memoRefreshKey}
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            badgeText="検索"
+            isOpen={openSections.memoSearch}
+            onToggle={() => handleToggleSection("memoSearch")}
+            subtitle="保存した学習メモをキーワード・カテゴリ・AI分析由来で探します。"
+            title="学習メモ検索"
+          >
+            <LearningMemoSearchSection
+              onMemoChanged={handleMemoChanged}
+              refreshKey={memoRefreshKey}
+              topics={learningMemoSearchTopics}
             />
           </CollapsibleSection>
 

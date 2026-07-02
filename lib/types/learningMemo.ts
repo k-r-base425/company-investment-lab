@@ -25,8 +25,14 @@ export type LearningMemo = {
 
 export type LearningMemoSummary = {
   totalCount: number;
+  manualMemoCount: number;
+  aiDerivedMemoCount: number;
   accountingMemoCount: number;
   investmentMemoCount: number;
   aiAnalysisMemoCount: number;
+  categories: {
+    category: LearningMemoCategory;
+    count: number;
+  }[];
   latestMemos: LearningMemo[];
 };

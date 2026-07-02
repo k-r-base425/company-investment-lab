@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-export type LearningSectionKey = "dashboard" | "accounting" | "investment" | "aiHistory";
+export type LearningSectionKey = "dashboard" | "memoSearch" | "accounting" | "investment" | "aiHistory";
 
 export type LearningQuickNavItem = {
   key: LearningSectionKey;
